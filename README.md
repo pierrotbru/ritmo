@@ -9,4 +9,4 @@ while the Book object contains one or more Contents, and all the info related to
 
 The database used is SQLite, and the program is written in Rust.
 
-I am learning Rust and SQL while I write code, so at any point there will be a lot of stuff that is wrong, or that can be improved.
+I am learning Rust and SQL while I write code, so at any point there will be a lot of wrong stuff, or that can be improved.
