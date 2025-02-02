@@ -1,6 +1,7 @@
+use std::time::Instant;
 use crate::filters::constants::constants::*;
-use crate::db::query_conditions::{QueryCondition, LikeType};
 use crate::db::query_builder::*;
+use db::db_structs::*;
 use crate::errors::RitmoErr;
 use std::path::PathBuf;
 use clap::{Parser, Subcommand};
@@ -114,17 +115,19 @@ async fn main() -> Result<(), RitmoErr> {
                 println!("{:?}", n);
             }            
         }
-        Commands::Check { source: _ } => {
+        Commands::Check { source } => {
+            let conn = connect_to_db(&source, false).await?;
             
-            let _query = QueryBuilder::new(TABLE_BOOKS)
-                .select_columns(&[COLUMN_BOOKS_ID])
-                .add_condition(QueryCondition::Like("author".to_string(), "Tolkien".to_string(), LikeType::Contains));
+            let query = QueryBuilder::new(TABLE_BOOKS)
+                .select_columns(&[COLUMN_BOOKS_ID]);
+
+            let n_books = query.execute_count(&conn).await?;
+            println!("books: {}", n_books);
         }
-        Commands::Add { source: _ } => {
-            
-            let _query = QueryBuilder::new("Books")
-                .select_columns(&["title", "author"])
-                .add_condition(QueryCondition::Like("author".to_string(), "Tolkien".to_string(), LikeType::Contains));
+        Commands::Add { source } => {
+            // connect to DB
+            let conn = connect_to_db(&source, false).await?;
+
         }
     }
     Ok(())

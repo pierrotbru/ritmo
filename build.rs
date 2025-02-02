@@ -44,6 +44,8 @@ fn main() {
     println!("cargo:warning=File constants.rs generato in: {}", dest_path.display()); // Formattazione corretta
 
     // Indica a Cargo di ricostruire se i file SQL o lo script Python cambiano
-    println!("cargo:rerun-if-changed=true");  // Controlla tutti i file SQL
-    println!("cargo:rerun-if-changed={}", python_script.display());
+    println!("cargo:rerun-if-changed=scripts/generate_constants.py");
+    for sql_file in sql_files.iter() {
+        println!("cargo:rerun-if-changed={}", sql_file.display());
+    }
 }
