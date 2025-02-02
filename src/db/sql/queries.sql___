@@ -1,0 +1,51 @@
+--!basic_book_info
+SELECT b.*, p.name AS publisher_name, f.format_name, s.series AS series_name
+FROM Books b
+LEFT JOIN Publishers p ON b.publisher_id = p.id
+LEFT JOIN Formats f ON b.format_id = f.id
+LEFT JOIN Series s ON b.series_id = s.series_id
+WHERE b.id = ?;
+
+--!contributors
+SELECT p.name, r.role_name
+FROM BookPeople bp
+JOIN People p ON bp.person_id = p.id
+JOIN Role r ON bp.role_id = r.id
+WHERE bp.book_id = ?;
+
+--!tags
+SELECT t.tag_name
+FROM BooksTags bt
+JOIN Tags t ON bt.tag_id = t.id
+WHERE bt.book_id = ?;
+
+--!contents
+SELECT c.*
+FROM BookContents bc
+JOIN Content c ON bc.content_id = c.id
+WHERE bc.book_id = ?;
+
+--!content_current_languages
+SELECT cl.lang_code
+FROM ContentCurrLang ccl
+JOIN CurrentLanguages cl ON ccl.curr_lang_id = cl.id
+WHERE ccl.content_id = ?;
+
+--!content_original_languages
+SELECT ol.lang_code
+FROM ContentOrigLang col
+JOIN OriginalLanguages ol ON col.orig_lang_id = ol.id
+WHERE col.content_id = ?;
+
+--!content_source_languages
+SELECT sl.lang_code
+FROM ContentSourcLang csl
+JOIN SourceLanguages sl ON csl.source_lang_id = sl.id
+WHERE csl.content_id = ?;
+
+--!contributors for contents
+SELECT p.name, r.role_name
+FROM ContentPeople cp
+JOIN People p ON cp.person_id = p.id
+JOIN Role r ON cp.role_id = r.id
+WHERE cp.content_id = ?;
