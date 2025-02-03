@@ -1,19 +1,7 @@
-use crate::errors::RitmoErr;
-use sqlx::sqlite::{SqlitePool, SqliteConnectOptions};
-use std::path::PathBuf;
+use crate::RitmoErr;
+use crate::PathBuf;
 
-pub async fn connect_to_db(db: &PathBuf, create: bool) -> Result<SqlitePool, RitmoErr> {
-    let fname = verify_path(db, create)?;
-
-    let options = SqliteConnectOptions::new()
-        .filename(&fname)
-        .create_if_missing(create);
-
-    let pool = SqlitePool::connect_with(options).await?;
-    Ok(pool)
-}
-
-fn verify_path(path: &PathBuf, create: bool) -> Result<PathBuf, RitmoErr> {
+pub fn verify_path(path: &PathBuf, create: bool) -> Result<PathBuf, RitmoErr> {
 
     // Canonicalize the path to resolve symbolic links and ".." components
     let mut out_path = path.clone();
@@ -25,7 +13,7 @@ fn verify_path(path: &PathBuf, create: bool) -> Result<PathBuf, RitmoErr> {
             }
             else {
                 if out_path.is_dir() {
-                    out_path = out_path.join("dbbooks.db");
+                    out_path = out_path.join("ritmo.db");
                 }
                 out_path
             }
@@ -33,8 +21,8 @@ fn verify_path(path: &PathBuf, create: bool) -> Result<PathBuf, RitmoErr> {
         Err(e) => {
             if create && e.kind() == std::io::ErrorKind::NotFound {
                 // If create is true and the file doesn't exist, that's okay
-                // create the full filename path adding the filename "dbbooks.db"
-                out_path.push("dbbooks.db");
+                // create the full filename path adding the filename "ritmo.db"
+                out_path.push("ritmo.db");
                 // create the parent directory
                 if let Some(parent) = out_path.parent() {
                     std::fs::create_dir_all(parent)

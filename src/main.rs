@@ -1,22 +1,13 @@
-use std::time::Instant;
-use crate::filters::constants::constants::*;
-use crate::db::query_builder::*;
-use db::db_structs::*;
 use crate::errors::RitmoErr;
 use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use tokio;
-use crate::db::connection::connect::connect_to_db;
-use crate::db::{db_fill, db_schema};
-use crate::tools::names_check;
-use crate::import::import_main;
 
-mod filters;
 mod errors;
 mod db;
-mod import;
-mod tools;
 
+use db::verify_path::verify_path;
+use db::connection::establish_connection;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about)]
@@ -24,7 +15,7 @@ mod tools;
 #[command(version = "0.1.0")]
 #[command(author = "Your Name <your.email@example.com>")]
 #[command(about = "A CLI tool for database operations")]
-#[command(long_about = "A comprehensive database management tool for organizing and manipulating book databases")]
+#[command(long_about = "A comprehensive database management tool for organizing and manipulating books databases")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -86,52 +77,19 @@ async fn main() -> Result<(), RitmoErr> {
 
     match cli.command {
         Commands::New { path } => {
-            let conn = connect_to_db(&path, true).await?;
-            let _ = db_schema::create_db_schema(&conn).await?;
-            let _ = db_fill::fill_db(&conn).await?;
-            println!("database {:?} created", path);
+            let db_path = verify_path(&path, true)?;
+            let _connection = establish_connection(&db_path, true).await?;
         },
-        Commands::Import { source, destination } => {
-            let s_conn = connect_to_db(&source, false).await?;
-            let d_conn = connect_to_db(&destination, true).await?;
-            let _ = db_schema::create_db_schema(&d_conn).await?;
-            let _ = db_fill::fill_db(&d_conn).await?;
-            println!("database {:?} created", destination);
-            let _ = import_main::copy_data_from_calibre_db(&s_conn, &d_conn).await?;
+        Commands::Import { source: _, destination: _ } => {
         },
-        Commands::List { source } => {
-            let _conn = connect_to_db(&source, false).await?;
+        Commands::List { source: _ } => {
         }
-
-        Commands::Names { source } => {
-            let conn = connect_to_db(&source, false).await?;
-            let names = names_check::check_names(&conn, 0.96, 0.93).await?;
-            for n in names {
-                println!("{:?}", n);
-            }            
-
-            let names = names_check::check_publ(&conn, 0.9, 0.86).await?;
-            for n in names {
-                println!("{:?}", n);
-            }            
+        Commands::Names { source: _ } => {
         }
-        Commands::Check { source } => {
-            let conn = connect_to_db(&source, false).await?;
-            
-            let query = QueryBuilder::new(TABLE_BOOKS)
-                .select_columns(&[COLUMN_BOOKS_ID]);
-
-            let n_books = query.execute_count(&conn).await?;
-            println!("books: {}", n_books);
+        Commands::Check { source: _ } => {
         }
-        Commands::Add { source } => {
-            // connect to DB
-            let conn = connect_to_db(&source, false).await?;
-
+        Commands::Add { source: _ } => {
         }
     }
     Ok(())
 }    
-
-
-

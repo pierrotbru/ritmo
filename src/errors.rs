@@ -21,11 +21,18 @@ pub enum QueryError {
     QueryBuilderError(#[from] QueryBuilderError),
     #[error("Errore del database: {0}")]
     DatabaseError(#[from] SqlxError),
-    // ... altri errori specifici
 }
 
 #[derive(Error, Debug)]
 pub enum RitmoErr {
+    #[error("Database connection failed: {0}")]
+    DatabaseConnectionFailed(String),
+    #[error("Database query failed: {0}")]
+    DatabaseQueryFailed(String),
+    #[error("Database insert failed: {0}")]
+    DatabaseInsertFailed(String),
+    #[error("Database migration failed: {0}")]
+    DatabaseMigrationFailed(String),
     #[error("Errore di accesso al file: {0}")]
     FileAccessError(#[from] std::io::Error),
     #[error("Nessun risultato trovato: {0}")]
