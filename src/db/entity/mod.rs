@@ -1,0 +1,23 @@
+// src/db/entity/mod.rs
+pub mod people;
+pub mod books;
+pub mod content;
+pub mod content_types;
+pub mod formats;
+pub mod publishers;
+pub mod role;
+pub mod series;
+pub mod tags;
+pub mod lang_names;
+pub mod original_languages;
+pub mod source_languages;
+pub mod current_languages;
+pub mod aliases;
+pub mod book_contents;
+pub mod book_people;
+pub mod content_people;
+pub mod content_tags;
+pub mod books_tags;
+pub mod content_curr_lang;
+pub mod content_orig_lang;
+pub mod content_sourc_lang;
