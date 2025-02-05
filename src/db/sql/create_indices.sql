@@ -1,32 +1,43 @@
--- Comprehensive Indices for Performance Optimization
+-- Comprehensive Performance Indices for Ritmo Database
 
--- books Table Indices
-CREATE INDEX IF NOT EXISTS idx_books_publication_date_range ON books (publication_date);
-CREATE INDEX IF NOT EXISTS idx_books_series_lookup ON books (series_id, series_index);
+-- Core Content and Book Lookup Indices
+CREATE INDEX IF NOT EXISTS idx_contents_core_search ON contents (title, type_id, publication_date);
+CREATE INDEX IF NOT EXISTS idx_books_core_search ON books (title, series_id, publication_date);
 
--- Composite Indices for Frequent Joins and Filters
-CREATE INDEX IF NOT EXISTS idx_books_publisher_format ON books (publisher_id, format_id);
-CREATE INDEX IF NOT EXISTS idx_books_acquisition_modified ON books (acquisition_date, last_modified_date);
+-- People and Role Relationship Indices
+CREATE INDEX IF NOT EXISTS idx_books_people_lookup ON books_people (book_id, person_id, role_id);
+CREATE INDEX IF NOT EXISTS idx_contents_people_lookup ON contents_people (content_id, person_id, role_id);
 
--- -- Junction Tables Indices (for Performance in Joins)
--- CREATE INDEX IF NOT EXISTS idx_bookcontents_content_lookup ON books_contents (content_id, book_id);
--- CREATE INDEX IF NOT EXISTS idx_bookpeople_person_role ON books_people (person_id, role_id);
--- CREATE INDEX IF NOT EXISTS idx_contentpeople_person_role ON contents_people (person_id, role_id);
--- 
--- -- Language Indices
--- CREATE INDEX IF NOT EXISTS idx_content_languages ON contents_current_languages (curr_lang_id);
--- CREATE INDEX IF NOT EXISTS idx_content_orig_languages ON contents_original_languages (orig_lang_id);
--- CREATE INDEX IF NOT EXISTS idx_content_source_languages ON contents_source_languages (source_lang_id);
--- 
--- -- tags and Categorization Indices
--- CREATE INDEX IF NOT EXISTS idx_contenttags_tag_lookup ON contents_tags (tag_id);
--- CREATE INDEX IF NOT EXISTS idx_bookstags_tag_lookup ON books_tags (tag_id);
--- 
--- -- Metadata Indices
--- CREATE INDEX IF NOT EXISTS idx_publishers_name_search ON publishers (name);
--- CREATE INDEX IF NOT EXISTS idx_series_name_search ON series (series);
--- CREATE INDEX IF NOT EXISTS idx_contenttypes_name ON contents_types (type_name);
--- CREATE INDEX IF NOT EXISTS idx_formats_name ON formats (format_name);
--- CREATE INDEX IF NOT EXISTS idx_tags_name ON tags (tag_name);
--- CREATE INDEX IF NOT EXISTS idx_role_name ON roles (role_name);
--- 
+-- Language Indices for Multilingual Support
+CREATE INDEX IF NOT EXISTS idx_contents_languages ON contents_current_languages (content_id, curr_lang_id);
+CREATE INDEX IF NOT EXISTS idx_contents_original_languages ON contents_original_languages (content_id, orig_lang_id);
+CREATE INDEX IF NOT EXISTS idx_contents_source_languages ON contents_source_languages (content_id, source_lang_id);
+
+-- Tagging and Categorization Indices
+CREATE INDEX IF NOT EXISTS idx_contents_tags_lookup ON contents_tags (content_id, tag_id);
+CREATE INDEX IF NOT EXISTS idx_books_tags_lookup ON books_tags (book_id, tag_id);
+
+-- Metadata and Filtering Indices
+CREATE INDEX IF NOT EXISTS idx_books_metadata ON books (publisher_id, format_id, series_id);
+CREATE INDEX IF NOT EXISTS idx_contents_metadata ON contents (type_id);
+
+-- Temporal Indices for Date-based Queries
+CREATE INDEX IF NOT EXISTS idx_books_temporal ON books (publication_date, acquisition_date, last_modified_date);
+CREATE INDEX IF NOT EXISTS idx_contents_temporal ON contents (publication_date);
+
+-- Junction Table Performance Indices
+CREATE INDEX IF NOT EXISTS idx_books_contents_junction ON books_contents (book_id, content_id);
+
+-- Search and Filtering Optimization
+CREATE INDEX IF NOT EXISTS idx_people_search ON people (name);
+CREATE INDEX IF NOT EXISTS idx_publishers_search ON publishers (name);
+CREATE INDEX IF NOT EXISTS idx_series_search ON series (series);
+CREATE INDEX IF NOT EXISTS idx_tags_search ON tags (tag_name);
+CREATE INDEX IF NOT EXISTS idx_roles_search ON roles (name);
+
+-- Composite Indices for Complex Queries
+CREATE INDEX IF NOT EXISTS idx_books_series_index ON books (series_id, series_index);
+CREATE INDEX IF NOT EXISTS idx_contents_type_date ON contents (type_id, publication_date);
+
+-- View Support Index
+CREATE INDEX IF NOT EXISTS idx_v_contents_details ON contents(id, type_id, publication_date);

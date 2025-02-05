@@ -23,6 +23,12 @@ pub mod contents_curr_lang;
 pub mod contents_orig_lang;
 pub mod contents_sourc_lang;
 pub mod laverdure;
+pub mod views;
+pub mod v_books_people_details;
+pub mod v_contents_people_details;
+pub mod v_books_with_contents;
+pub mod v_books_details;
+pub mod v_contents_details;
 
 // Centralized re-exports to break potential circular dependencies
 pub use people::Entity as PeopleEntity;
@@ -47,3 +53,9 @@ pub use languages_names::Entity as LanguagesNamesEntity;
 pub use original_languages::Entity as OriginalLanguagesEntity;
 pub use source_languages::Entity as SourceLanguagesEntity;
 pub use current_languages::Entity as CurrentLanguagesEntity;
+pub use views::Entity as ViewsEntity;
+pub use v_books_people_details::Entity as BooksPeopleDetails;
+pub use v_contents_people_details::Entity as ContentsPeopleDetails;
+pub use v_books_with_contents::Entity as BooksWithContents;
+pub use v_books_details::Entity as BooksDetails;
+pub use v_contents_details::Entity as ContentsDetails;

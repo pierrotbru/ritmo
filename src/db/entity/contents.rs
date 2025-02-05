@@ -10,7 +10,7 @@ pub struct Model {
     pub id: i64,
     pub title: String,
     pub type_id: Option<i64>,
-    pub issue_date: Option<i64>,
+    pub publication_date: Option<i64>,
     pub original_title: Option<String>,
     pub notes: Option<String>,
 }

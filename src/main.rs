@@ -71,16 +71,21 @@ enum Commands {
         path: PathBuf,
     },
 
+    /// Add a new content entry
+    AddContent {
+        /// Database path
+        #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
+        path: PathBuf,
+    },
 }
-
 
 #[tokio::main] 
 async fn main() -> Result<(), RitmoErr> {
     let cli = Cli::parse();
 
-    match cli.command {
+    match &cli.command {
         Commands::New { path } => {
-            let conn = establish_connection(&path, true).await?;
+            let _conn = establish_connection(&path, true).await?;
         },
         Commands::Import { source, destination } => {
             let conn = establish_connection(&destination, true).await?;
@@ -91,7 +96,8 @@ async fn main() -> Result<(), RitmoErr> {
             let _ = import_main::copy_data_from_calibre_db(&source, &destination).await?;
 
         },
-        Commands::List { path: _ } => {
+        Commands::List { path } => {
+            let db = establish_connection(&path, false).await?;
         }
         Commands::Names { path } => {
             let conn = establish_connection(&path, false).await?;
@@ -103,6 +109,8 @@ async fn main() -> Result<(), RitmoErr> {
         Commands::Check { path: _ } => {
         }
         Commands::Add { path: _ } => {
+        }
+        Commands::AddContent { path: _ } => {
         }
     }
     Ok(())
