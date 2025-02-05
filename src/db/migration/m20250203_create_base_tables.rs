@@ -1,3 +1,5 @@
+#![allow(non_camel_case_types)]
+
 use sea_orm_migration::prelude::*;
 use async_trait::async_trait;
 
@@ -148,7 +150,7 @@ impl MigrationTrait for Migration {
                     .to_owned(),
             )
             .await?;
-
+            seed_roles_table(manager).await?;
         Ok(())
     }
 
@@ -221,4 +223,24 @@ enum roles {
     Table,
     Id,
     Name,
+}
+
+async fn seed_roles_table(manager: &SchemaManager<'_>) -> Result<(), DbErr> {
+    let roles_data = vec![
+        "author",
+        "translator",
+        "curator",
+    ];
+
+    for role in roles_data {
+        let insert = Query::insert()
+            .into_table(roles::Table)
+            .columns([roles::Name])
+            .values_panic([role.into()])
+            .to_owned();
+        
+        manager.exec_stmt(insert).await?;
+    }
+
+    Ok(())
 }

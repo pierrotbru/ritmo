@@ -5,9 +5,12 @@ use tokio;
 
 mod errors;
 mod db;
+mod tools;
+mod import;
 
-use db::verify_path::verify_path;
+use tools::names_check::check_names;
 use db::connection::establish_connection;
+use crate::import::import_main;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about)]
@@ -46,26 +49,26 @@ enum Commands {
     List {
         /// Source database path to import data from
         #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
-        source: PathBuf,
+        path: PathBuf,
     },
 
     /// Shows couples of most resembling names, to check for typing errors or incomplete names
     Names {
         /// Source database path to import data from
         #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
-        source: PathBuf,
+        path: PathBuf,
     },
 
     Check {
         /// Source database path to import data from
         #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
-        source: PathBuf,
+        path: PathBuf,
     },
 
     Add {
         /// Database path
         #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
-        source: PathBuf,
+        path: PathBuf,
     },
 
 }
@@ -77,18 +80,29 @@ async fn main() -> Result<(), RitmoErr> {
 
     match cli.command {
         Commands::New { path } => {
-            let db_path = verify_path(&path, true)?;
-            let _connection = establish_connection(&db_path, true).await?;
+            let conn = establish_connection(&path, true).await?;
         },
-        Commands::Import { source: _, destination: _ } => {
+        Commands::Import { source, destination } => {
+            let conn = establish_connection(&destination, true).await?;
+            drop(conn);
+            let conn = establish_connection(&source, false).await?;
+            drop(conn);
+
+            let _ = import_main::copy_data_from_calibre_db(&source, &destination).await?;
+
         },
-        Commands::List { source: _ } => {
+        Commands::List { path: _ } => {
         }
-        Commands::Names { source: _ } => {
+        Commands::Names { path } => {
+            let conn = establish_connection(&path, false).await?;
+            let names = check_names(&conn, 0.96, 0.93).await?;
+            for n in names {
+                println!("{:?}", n);
+            }            
         }
-        Commands::Check { source: _ } => {
+        Commands::Check { path: _ } => {
         }
-        Commands::Add { source: _ } => {
+        Commands::Add { path: _ } => {
         }
     }
     Ok(())

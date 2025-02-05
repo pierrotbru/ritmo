@@ -1,13 +1,14 @@
-// src/db/entity/book_contents.rs
+#![allow(non_camel_case_types)]
+// src/db/entity/books_contents.rs
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "books_contents")]
 pub struct Model {
-    #[sea_orm(primary_key)]
+    #[sea_orm(primary_key, auto_increment = false)]
     pub book_id: i64,
-    #[sea_orm(primary_key)]
+    #[sea_orm(primary_key, auto_increment = false)]
     pub content_id: i64,
 }
 
@@ -20,9 +21,9 @@ pub enum Relation {
     )]
     books,
     #[sea_orm(
-        belongs_to = "super::content::Entity",
+        belongs_to = "super::contents::Entity",
         from = "Column::ContentId",
-        to = "super::content::Column::Id"
+        to = "super::contents::Column::Id"
     )]
     contents,
 }

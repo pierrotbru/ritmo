@@ -6,6 +6,12 @@ pub fn verify_path(path: &PathBuf, create: bool) -> Result<PathBuf, RitmoErr> {
     // Canonicalize the path to resolve symbolic links and ".." components
     let mut out_path = path.clone();
 
+    if out_path.is_relative() {
+        out_path = std::env::current_dir()
+            .map_err(|e| RitmoErr::PathError(format!("Failed to get current directory: {}", e)))?
+            .join(&out_path);
+    }
+
     out_path = match out_path.canonicalize() {
         Ok(_) => {
             if create == true {

@@ -1,3 +1,5 @@
+#![allow(non_camel_case_types)]
+
 use sea_orm_migration::prelude::*;
 use async_trait::async_trait;
 
@@ -66,6 +68,8 @@ impl MigrationTrait for Migration {
                     .to_owned(),
             )
             .await?;
+            create_laverdure_table(manager).await?;
+            seed_laverdure_table(manager).await?;
 
         Ok(())
     }
@@ -75,6 +79,8 @@ impl MigrationTrait for Migration {
         manager.drop_table(Table::drop().table(languages_names::Table).to_owned()).await?;
         manager.drop_table(Table::drop().table(aliases::Table).to_owned()).await?;
         manager.drop_table(Table::drop().table(tags::Table).to_owned()).await?;
+        manager.drop_table(Table::drop().table(Laverdure::Table).to_owned()).await?;
+
         Ok(())
     }
 }
@@ -107,4 +113,55 @@ enum languages_names {
 enum people {
     Table,
     Id,
+}
+
+#[derive(Iden)]
+enum Laverdure {
+    Table,
+    Key,
+    Value,
+}
+
+/* this is a future use table, in which I load program and database data */
+async fn create_laverdure_table(manager: &SchemaManager<'_>) -> Result<(), DbErr> {
+    manager
+        .create_table(
+            Table::create()
+                .table(Laverdure::Table)
+                .if_not_exists()
+                .col(
+                    ColumnDef::new(Laverdure::Key)
+                        .text()
+                        .not_null()
+                        .primary_key(),
+                )
+                .col(
+                    ColumnDef::new(Laverdure::Value)
+                        .text()
+                        .null(),
+                )
+                .to_owned(),
+        )
+        .await
+}
+
+async fn seed_laverdure_table(manager: &SchemaManager<'_>) -> Result<(), DbErr> {
+    let laverdure_data = vec![
+        ("author", "laverdure"),
+        ("program", "ritmo"),
+        ("program release", "0.0.0"),
+        ("database_version", "0.0.0"),
+    ];
+
+    for (key, value) in laverdure_data {
+        let insert = Query::insert()
+            .into_table(Laverdure::Table)
+            .columns([Laverdure::Key, Laverdure::Value])
+            .values_panic([key.into(), value.into()])
+            .to_owned();
+        
+        manager.exec_stmt(insert).await?;
+    }
+
+    Ok(())
 }

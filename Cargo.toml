@@ -9,9 +9,22 @@ async-trait = "0.1.77"
 clap = { version = "4.5.26", features = ["derive"] }
 futures-util = "0.3.31"
 serde = { version = "1.0.217", features = ["derive"] }
-sea-orm = { version = "0.12.15", features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros"] }
+
+# Pin sea-orm to the *exact* same version as sea-orm-migration
+sea-orm = "=0.12.15" # Or the specific version your sea-orm-migration uses.
+#sea-orm-migration = "=0.12.15" # Pinning is important!!, features = ["sqlx-sqlite", "runtime-tokio-rustls"]
+#sea-orm = { version = "0.12", features = ["runtime-tokio-rustls", "sqlite"] } # Important: sqlite here
 sea-orm-migration = { version = "0.12.15", features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
-sqlx = { version = "0.7.0", features = [ "runtime-tokio-rustls", "sqlite" ] } 
+
 thiserror = "2.0.11"
-tokio = { version = "1.43.0", features = ["full"] }
 tracing = "0.1.41"
+strsim = "0.11.1"
+unicode-normalization = "0.1.24"
+#sqlx = { version = "0.7", features = ["sqlite"] }
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite"] } # CRUCIAL: sqlite for sqlx as well!
+tokio = { version = "1.43.0", features = ["full"] }
+
+[features]
+default = ["sqlite"]
+sqlite = [] #  empty, or could include other features for ritmo itself if needed
+

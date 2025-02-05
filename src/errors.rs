@@ -33,6 +33,8 @@ pub enum RitmoErr {
     DatabaseInsertFailed(String),
     #[error("Database migration failed: {0}")]
     DatabaseMigrationFailed(String),
+    #[error("Database error: {0}")]
+    DatabaseError(String),
     #[error("Errore di accesso al file: {0}")]
     FileAccessError(#[from] std::io::Error),
     #[error("Nessun risultato trovato: {0}")]
@@ -67,3 +69,9 @@ impl From<SqlxError> for RitmoErr {
     }
 }
 
+impl From<sea_orm::DbErr> for RitmoErr {
+    fn from(err: sea_orm::DbErr) -> Self {
+        // Choose an appropriate variant or create a new one
+        RitmoErr::DatabaseError(err.to_string())
+    }
+}

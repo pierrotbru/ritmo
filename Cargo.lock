@@ -1607,9 +1607,11 @@ dependencies = [
  "sea-orm-migration",
  "serde",
  "sqlx",
+ "strsim",
  "thiserror 2.0.11",
  "tokio",
  "tracing",
+ "unicode-normalization",
 ]
 
 [[package]]
