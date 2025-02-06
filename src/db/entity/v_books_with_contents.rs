@@ -8,11 +8,20 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub book_id: i64,
     pub book_title: String,
-    #[sea_orm(primary_key)]
-    pub content_id: i64,
-    pub content_title: String,
-    pub content_type_name: Option<String>,
-    pub content_publication_year: Option<i32>,
+    pub book_original_title: Option<String>,
+    pub publication_date: Option<Date>,
+    pub acquisition_date: Option<Date>,
+    pub last_modified_date: Option<Date>,
+    pub book_notes: Option<String>,
+    pub publisher_name: Option<String>,
+    pub format_name: Option<String>,
+    pub series_name: Option<String>,
+    pub series_id: Option<i64>,
+    pub series_index: Option<i32>,
+    pub book_tags: Option<String>,
+    pub book_people: Option<String>,
+    pub contents_titles: Option<String>,
+    pub contents_ids: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -23,18 +32,6 @@ pub enum Relation {
         to = "super::books::Column::Id"
     )]
     Books,
-    #[sea_orm(
-        belongs_to = "super::contents::Entity",
-        from = "Column::ContentId",
-        to = "super::contents::Column::Id"
-    )]
-    Contents,
-    #[sea_orm(
-        belongs_to = "super::contents_types::Entity",
-        from = "Column::ContentTypeName",
-        to = "super::contents_types::Column::TypeName"
-    )]
-    ContentsTypes,
 }
 
 impl Related<super::books::Entity> for Entity {
@@ -43,37 +40,29 @@ impl Related<super::books::Entity> for Entity {
     }
 }
 
-impl Related<super::contents::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Contents.def()
-    }
-}
-
-impl Related<super::contents_types::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::ContentsTypes.def()
-    }
-}
-
 impl ActiveModelBehavior for ActiveModel {}
 
 // Helper methods
 impl Model {
-    pub fn new(
-        book_id: i64,
-        book_title: String,
-        content_id: i64,
-        content_title: String,
-        content_type_name: Option<String>,
-        content_publication_year: Option<i32>,
-    ) -> Self {
-        Self {
-            book_id,
-            book_title,
-            content_id,
-            content_title,
-            content_type_name,
-            content_publication_year,
-        }
+    pub fn get_content_ids(&self) -> Vec<i64> {
+        self.contents_ids
+            .as_ref()
+            .map(|ids| 
+                ids.split(',')
+                   .filter_map(|id| id.parse().ok())
+                   .collect()
+            )
+            .unwrap_or_default()
+    }
+
+    pub fn get_content_titles(&self) -> Vec<String> {
+        self.contents_titles
+            .as_ref()
+            .map(|titles| 
+                titles.split(',')
+                      .map(|title| title.to_string())
+                      .collect()
+            )
+            .unwrap_or_default()
     }
 }

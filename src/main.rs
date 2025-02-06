@@ -1,3 +1,4 @@
+use db::data_editing::get_books::get_view_bwc;
 use crate::errors::RitmoErr;
 use std::path::PathBuf;
 use clap::{Parser, Subcommand};
@@ -50,6 +51,10 @@ enum Commands {
         /// Source database path to import data from
         #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
         path: PathBuf,
+
+        /// number of book to list
+        #[arg(short, long, help = "Id number of book to read", default_value = "1")]
+        id: i64,
     },
 
     /// Shows couples of most resembling names, to check for typing errors or incomplete names
@@ -96,8 +101,43 @@ async fn main() -> Result<(), RitmoErr> {
             let _ = import_main::copy_data_from_calibre_db(&source, &destination).await?;
 
         },
-        Commands::List { path } => {
+        Commands::List { path, id } => {
             let db = establish_connection(&path, false).await?;
+/*
+            match get_book_details(&db, *id).await? {
+                Some(book) => {
+                    println!("Book Details:");
+                    println!("ID: {}", book.book_id);
+                    println!("Title: {}", book.book_title);
+                    println!("Original Title: {:?}", book.book_original_title);
+                    println!("Publication Date: {:?}", book.publication_date);
+                    println!("Publisher: {:?}", book.publisher_name);
+                    println!("Series: {:?}", book.series_name);
+                    println!("Tags: {:?}", book.book_tags);
+                    println!("People: {:?}", book.book_people);
+                },
+                None => println!("No book found with ID {}",id),
+            }
+            
+            let contents = get_book_contents(&db, *id).await?;
+            if !contents.is_empty() {
+                println!("\nBook Contents:");
+                for (index, content) in contents.iter().enumerate() {
+                    println!("Content {}:", index + 1);
+                    println!("  Content ID: {}", content.content_id);
+                    println!("  Content Title: {}", content.content_title);
+                    if let Some(original_title) = &content.content_original_title {
+                        println!("  Original Title: {}", original_title);
+                    }
+                }
+            } else {
+                println!("No contents found for book ID {}", id);
+            }
+*/
+
+        let book_w_contents = get_view_bwc(&db, *id).await?;
+        println!("{:?}", book_w_contents);
+
         }
         Commands::Names { path } => {
             let conn = establish_connection(&path, false).await?;

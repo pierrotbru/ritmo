@@ -8,14 +8,18 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub book_id: i64,
     pub book_title: String,
-    pub book_subtitle: Option<String>,
     pub book_original_title: Option<String>,
-    pub book_description: Option<String>,
-    pub book_isbn: Option<String>,
-    pub book_pages: Option<i32>,
-    pub book_publication_year: Option<i32>,
-    pub book_publisher_name: Option<String>,
-    pub book_series_name: Option<String>,
+    pub publication_date: Option<DateTimeWithTimeZone>,
+    pub acquisition_date: Option<DateTimeWithTimeZone>,
+    pub last_modified_date: Option<DateTimeWithTimeZone>,
+    pub book_notes: Option<String>,
+    pub publisher_name: Option<String>,
+    pub format_name: Option<String>,
+    pub series_name: Option<String>,
+    pub series_id: Option<i64>,
+    pub series_index: Option<f64>,
+    pub book_tags: Option<String>,
+    pub book_people: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -28,14 +32,20 @@ pub enum Relation {
     Books,
     #[sea_orm(
         belongs_to = "super::publishers::Entity",
-        from = "Column::BookPublisherName",
+        from = "Column::PublisherName",
         to = "super::publishers::Column::Name"
     )]
     Publishers,
     #[sea_orm(
+        belongs_to = "super::formats::Entity",
+        from = "Column::FormatName",
+        to = "super::formats::Column::Name"
+    )]
+    Formats,
+    #[sea_orm(
         belongs_to = "super::series::Entity",
-        from = "Column::BookSeriesName",
-        to = "super::series::Column::Name"
+        from = "Column::SeriesId",
+        to = "super::series::Column::Id"
     )]
     Series,
 }
@@ -52,6 +62,12 @@ impl Related<super::publishers::Entity> for Entity {
     }
 }
 
+impl Related<super::formats::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Formats.def()
+    }
+}
+
 impl Related<super::series::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Series.def()
@@ -65,26 +81,34 @@ impl Model {
     pub fn new(
         book_id: i64,
         book_title: String,
-        book_subtitle: Option<String>,
         book_original_title: Option<String>,
-        book_description: Option<String>,
-        book_isbn: Option<String>,
-        book_pages: Option<i32>,
-        book_publication_year: Option<i32>,
-        book_publisher_name: Option<String>,
-        book_series_name: Option<String>,
+        publication_date: Option<DateTimeWithTimeZone>,
+        acquisition_date: Option<DateTimeWithTimeZone>,
+        last_modified_date: Option<DateTimeWithTimeZone>,
+        book_notes: Option<String>,
+        publisher_name: Option<String>,
+        format_name: Option<String>,
+        series_name: Option<String>,
+        series_id: Option<i64>,
+        series_index: Option<f64>,
+        book_tags: Option<String>,
+        book_people: Option<String>,
     ) -> Self {
         Self {
             book_id,
             book_title,
-            book_subtitle,
             book_original_title,
-            book_description,
-            book_isbn,
-            book_pages,
-            book_publication_year,
-            book_publisher_name,
-            book_series_name,
+            publication_date,
+            acquisition_date,
+            last_modified_date,
+            book_notes,
+            publisher_name,
+            format_name,
+            series_name,
+            series_id,
+            series_index,
+            book_tags,
+            book_people,
         }
     }
 }
