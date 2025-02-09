@@ -8,7 +8,7 @@ pub fn verify_path(path: &PathBuf, create: bool) -> Result<PathBuf, RitmoErr> {
 
     if out_path.is_relative() {
         out_path = std::env::current_dir()
-            .map_err(|e| RitmoErr::PathError(format!("Failed to get current directory: {}", e)))?
+            .map_err(|e| RitmoErr::PathError(format!("Failed to get current path: {}", e)))?
             .join(&out_path);
     }
 

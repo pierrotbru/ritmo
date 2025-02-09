@@ -69,3 +69,4 @@ enum contents {
     Table,
     Id,
 }
+

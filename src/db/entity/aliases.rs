@@ -10,7 +10,6 @@ pub struct Model {
     pub id: i64,
     pub person_id: i64,
     pub alias: String,
-    pub language: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

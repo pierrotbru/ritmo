@@ -103,40 +103,9 @@ async fn main() -> Result<(), RitmoErr> {
         },
         Commands::List { path, id } => {
             let db = establish_connection(&path, false).await?;
-/*
-            match get_book_details(&db, *id).await? {
-                Some(book) => {
-                    println!("Book Details:");
-                    println!("ID: {}", book.book_id);
-                    println!("Title: {}", book.book_title);
-                    println!("Original Title: {:?}", book.book_original_title);
-                    println!("Publication Date: {:?}", book.publication_date);
-                    println!("Publisher: {:?}", book.publisher_name);
-                    println!("Series: {:?}", book.series_name);
-                    println!("Tags: {:?}", book.book_tags);
-                    println!("People: {:?}", book.book_people);
-                },
-                None => println!("No book found with ID {}",id),
-            }
-            
-            let contents = get_book_contents(&db, *id).await?;
-            if !contents.is_empty() {
-                println!("\nBook Contents:");
-                for (index, content) in contents.iter().enumerate() {
-                    println!("Content {}:", index + 1);
-                    println!("  Content ID: {}", content.content_id);
-                    println!("  Content Title: {}", content.content_title);
-                    if let Some(original_title) = &content.content_original_title {
-                        println!("  Original Title: {}", original_title);
-                    }
-                }
-            } else {
-                println!("No contents found for book ID {}", id);
-            }
-*/
 
-        let book_w_contents = get_view_bwc(&db, *id).await?;
-        println!("{:?}", book_w_contents);
+            let book_w_contents = get_view_bwc(&db, *id).await?;
+            println!("{:?}", book_w_contents);
 
         }
         Commands::Names { path } => {

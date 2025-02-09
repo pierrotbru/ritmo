@@ -27,6 +27,12 @@ pub enum Relation {
         to = "super::current_languages::Column::Id"
     )]
     current_languages,
+    #[sea_orm(
+        belongs_to = "super::original_languages::Entity",
+        from = "Column::LanguageId",
+        to = "super::original_languages::Column::Id"
+    )]
+    original_languages,
 }
 
 impl Related<super::source_languages::Entity> for Entity {
@@ -38,6 +44,12 @@ impl Related<super::source_languages::Entity> for Entity {
 impl Related<super::current_languages::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::current_languages.def()
+    }
+}
+
+impl Related<super::original_languages::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::original_languages.def()
     }
 }
 

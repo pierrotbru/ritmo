@@ -3,23 +3,23 @@ use sqlx::{Error as SqlxError};
 
 #[derive(Error, Debug)]
 pub enum QueryBuilderError {
-    #[error("Errore durante la costruzione della query: {0}")]
+    #[error("Query building error: {0}")]
     InvalidParameter(&'static str),
-    #[error("Errore di sintassi della query: {0}")]
+    #[error("Query synthax error: {0}")]
     SyntaxError(String),
-    #[error("Nessuna colonna selezionata nella query")]
+    #[error("No column selection in query")]
     NoSelectColumns,
-    #[error("Errore generico nella query: {0}")]
+    #[error("Query generic error: {0}")]
     GenericError(String),
 }
 
 #[derive(Error, Debug)]
 pub enum QueryError {
-    #[error("Errore durante l'esecuzione della query: {0}")]
+    #[error("Query execution error: {0}")]
     GenericQueryError(String),
-    #[error("Errore durante la costruzione della query: {0}")]
+    #[error("Query building error: {0}")]
     QueryBuilderError(#[from] QueryBuilderError),
-    #[error("Errore del database: {0}")]
+    #[error("Database error: {0}")]
     DatabaseError(#[from] SqlxError),
 }
 
@@ -35,31 +35,31 @@ pub enum RitmoErr {
     DatabaseMigrationFailed(String),
     #[error("Database error: {0}")]
     DatabaseError(String),
-    #[error("Errore di accesso al file: {0}")]
+    #[error("File access failed: {0}")]
     FileAccessError(#[from] std::io::Error),
-    #[error("Nessun risultato trovato: {0}")]
+    #[error("No result found: {0}")]
     NoResultsError(String),
-    #[error("Errore di integrità del database: {0}")]
+    #[error("Database integrity fail : {0}")]
     DataIntegrityError(String),
-    #[error("Errore di importazione: {0}")]
+    #[error("Import error: {0}")]
     ImportError(String),
-    #[error("Errore di esportazione: {0}")]
+    #[error("Export error: {0}")]
     ExportError(String),
-    #[error("Errore sconosciuto: {0}")]
+    #[error("Unknown error: {0}")]
     UnknownError(String),
-    #[error("Errore di percorso: {0}")]
+    #[error("Path error: {0}")]
     PathError(String),
-    #[error("Errore di creazione database: {0}")]
+    #[error("Database creation fail: {0}")]
     DatabaseCreationFailed(String),
-    #[error("Altro errore: {0}")]
+    #[error("Other error: {0}")]
     OtherError(String),
-    #[error("Errore durante la costruzione della query: {0}")]
+    #[error("uery building error: {0}")]
     QueryBuilderError(#[from] QueryBuilderError), 
-    #[error("Nome della tabella non valido: {0}")]
+    #[error("Invalid table name: {0}")]
     InvalidTableName(String),
-    #[error("Nome della colonna non valido: {0}")]
+    #[error("Invalid column name: {0}")]
     InvalidColumnName(String),
-    #[error("Errore durante l'esecuzione della query: {0}")]
+    #[error("Query execution error: {0}")]
     QueryError(#[from] QueryError),
 }
 

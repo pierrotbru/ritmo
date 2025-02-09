@@ -227,9 +227,9 @@ enum roles {
 
 async fn seed_roles_table(manager: &SchemaManager<'_>) -> Result<(), DbErr> {
     let roles_data = vec![
-        "author",
-        "translator",
-        "curator",
+        "Author",
+        "Translator",
+        "Curator",
     ];
 
     for role in roles_data {
@@ -244,3 +244,4 @@ async fn seed_roles_table(manager: &SchemaManager<'_>) -> Result<(), DbErr> {
 
     Ok(())
 }
+

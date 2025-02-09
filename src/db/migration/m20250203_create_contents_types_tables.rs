@@ -25,7 +25,7 @@ impl MigrationTrait for Migration {
                     .to_owned(),
             )
             .await?;
-
+            seed_types_table(manager).await?;
         Ok(())
     }
 
@@ -40,4 +40,34 @@ enum contents_types {
     Table,
     Id,
     TypeName,
+}
+
+async fn seed_types_table(manager: &SchemaManager<'_>) -> Result<(), DbErr> {
+    let types_data = vec![
+        "Novel",
+        "Novella",
+        "Essay",
+        "Treatise",
+        "Dissertation",
+        "Biography",
+        "Autobiography",
+        "Memoir",
+        "Interview",
+        "Play",
+        "One-act play",
+        "Poetry",
+        "Opera"
+    ];
+
+    for contents_type in types_data {
+        let insert = Query::insert()
+            .into_table(contents_types::Table)
+            .columns([contents_types::TypeName])
+            .values_panic([contents_type.into()])
+            .to_owned();
+        
+        manager.exec_stmt(insert).await?;
+    }
+
+    Ok(())
 }
