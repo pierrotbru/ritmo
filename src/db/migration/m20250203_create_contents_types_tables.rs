@@ -45,7 +45,8 @@ enum contents_types {
 async fn seed_types_table(manager: &SchemaManager<'_>) -> Result<(), DbErr> {
     let types_data = vec![
         "Novel",
-        "Novella",
+        "Short novel",
+        "Short story",
         "Essay",
         "Treatise",
         "Dissertation",

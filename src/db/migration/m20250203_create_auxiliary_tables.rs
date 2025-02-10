@@ -1,7 +1,12 @@
 #![allow(non_camel_case_types)]
 
+use std::path::Path;
 use sea_orm_migration::prelude::*;
 use async_trait::async_trait;
+use csv::ReaderBuilder; // Use ReaderBuilder for more control
+use sea_orm::DbErr;
+
+
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -70,6 +75,7 @@ impl MigrationTrait for Migration {
             .await?;
             create_laverdure_table(manager).await?;
             seed_laverdure_table(manager).await?;
+            seed_languages_names_table(manager).await?;
 
         Ok(())
     }
@@ -161,6 +167,75 @@ async fn seed_laverdure_table(manager: &SchemaManager<'_>) -> Result<(), DbErr> 
             .to_owned();
         
         manager.exec_stmt(insert).await?;
+    }
+
+    Ok(())
+}
+
+async fn get_languages_names() -> Result<Vec<(String, String)>, DbErr> {
+    let path = Path::new("./resources/iso-639-2.tab");
+
+    // More robust path handling:
+    let path = match path.canonicalize() {
+        Ok(p) => p,
+        Err(e) => {
+            // Convert the io::Error to DbErr.  You might want a more specific DbErr variant.
+            return Err(DbErr::Custom(format!("Error canonicalizing path: {}", e)));
+        }
+    };
+
+    let mut reader = match ReaderBuilder::new()
+        .delimiter(b'\t')
+        .has_headers(false) // Se il tuo file non ha intestazioni
+        .from_path(path) {
+            Ok(r) => r,
+            Err(e) => return Err(DbErr::Custom(format!("CSV reader error: {}", e))),
+    };
+
+    let mut language_names = Vec::new(); // Pre-allocate for efficiency
+
+    for result in reader.records() {
+        match result {
+            Ok(record) => {
+                let col0 = record.get(0);
+                let col3 = record.get(3);
+
+                match (col0, col3) {
+                    (Some(val0), Some(val3)) => {
+                        language_names.push((val0.to_string(), val3.to_string()));
+                    }
+                    _ => {
+                        return Err(DbErr::Custom("Dati mancanti nel record (colonna 0 o 3)".to_string()));
+                    }
+                }
+            }
+            Err(e) => return Err(DbErr::Custom(format!("Errore leggendo un record CSV: {}", e))),
+        }
+    }
+
+    Ok(language_names)
+}
+
+// Questa funziona me è un loop, molto lento
+
+async fn seed_languages_names_table(manager: &SchemaManager<'_>) -> Result<(), DbErr> {
+    let languages = get_languages_names().await?;
+
+    if languages.is_empty() {
+        return Ok(()); // Nothing to insert
+    }
+
+    for (iso_code, language_name) in languages {
+        let insert = Query::insert() // Costruisci la query *dentro* il ciclo
+            .into_table(languages_names::Table)
+            .columns([languages_names::Id, languages_names::RefName])
+            .values([iso_code.clone().into(), language_name.into()])
+            .map_err(|e| DbErr::Custom(format!("Error inserting query: {}", e)))?
+            .to_owned(); // to_owned() *qui* è fondamentale
+
+        if let Err(e) = manager.exec_stmt(insert).await { // Esecuzione della query
+            return Err(DbErr::Custom(format!("Errore nell'eseguire la query: {}", e)));
+        }
     }
 
     Ok(())
