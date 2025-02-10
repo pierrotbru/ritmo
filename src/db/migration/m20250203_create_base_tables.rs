@@ -129,6 +129,8 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(ColumnDef::new(people::Name).string().not_null())
+                    .col(ColumnDef::new(people::Nationality).string())
+                    .col(ColumnDef::new(people::BirthYear).string())
                     .to_owned(),
             )
             .await?;
@@ -216,6 +218,8 @@ enum people {
     Table,
     Id,
     Name,
+    Nationality,
+    BirthYear,
 }
 
 #[derive(Iden)]
@@ -230,6 +234,7 @@ async fn seed_roles_table(manager: &SchemaManager<'_>) -> Result<(), DbErr> {
         "Author",
         "Translator",
         "Curator",
+        "Cover designer",
     ];
 
     for role in roles_data {

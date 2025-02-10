@@ -9,7 +9,7 @@ mod db;
 mod tools;
 mod import;
 
-use tools::names_check::check_names;
+use tools::names_check::{check_names, compare_single_name};
 use db::connection::establish_connection;
 use crate::import::import_main;
 
@@ -68,6 +68,9 @@ enum Commands {
         /// Source database path to import data from
         #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
         path: PathBuf,
+
+        #[arg(short, long, help = "Name to compare", default_value = "Smith")]
+        name: String,
     },
 
     Add {
@@ -115,7 +118,12 @@ async fn main() -> Result<(), RitmoErr> {
                 println!("{:?}", n);
             }            
         }
-        Commands::Check { path: _ } => {
+        Commands::Check { path, name} => {
+            let conn = establish_connection(&path, false).await?;
+            let names = compare_single_name(&conn, (&name).to_string(), 0.6, 0.6).await?;
+            for n in names {
+                println!("{:?}", n);
+            }            
         }
         Commands::Add { path: _ } => {
         }
