@@ -12,6 +12,7 @@ mod import;
 use tools::names_check::{check_names, compare_single_name};
 use db::connection::establish_connection;
 use crate::import::import_main;
+use db::do_filter::get_book_ids_by_person_name;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about)]
@@ -73,17 +74,13 @@ enum Commands {
         name: String,
     },
 
-    Add {
+    Search {
         /// Database path
         #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
         path: PathBuf,
-    },
 
-    /// Add a new content entry
-    AddContent {
-        /// Database path
-        #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
-        path: PathBuf,
+        #[arg(short, long, help = "Name to compare", default_value = "Smith")]
+        name: String,
     },
 }
 
@@ -125,9 +122,15 @@ async fn main() -> Result<(), RitmoErr> {
                 println!("{:?}", n);
             }            
         }
-        Commands::Add { path: _ } => {
-        }
-        Commands::AddContent { path: _ } => {
+        Commands::Search { path, name } => {
+            let conn = establish_connection(&path, false).await?;
+
+            println!("Cerco nel database {:?} i libri di {:?}", path, name );
+
+            let names = get_book_ids_by_person_name(&conn, &name).await?;
+            for n in names {
+                println!("{:?}", n);
+            }            
         }
     }
     Ok(())

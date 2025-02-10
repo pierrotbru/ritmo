@@ -1,5 +1,5 @@
 #![allow(non_camel_case_types)]
-// src/db/entity/mod.rs
+
 pub mod people;
 pub mod books;
 pub mod contents;

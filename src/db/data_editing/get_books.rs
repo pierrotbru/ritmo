@@ -6,24 +6,12 @@ use sea_orm::{
     EntityTrait, 
     QueryFilter,
     ColumnTrait,
-    QuerySelect,
-    RelationTrait, 
-    ModelTrait,
-    JoinType,
-    FromQueryResult,
-    prelude::*,
 };
-use sea_orm::sea_query::{Expr, TableRef, Iden, SeaRc, ColumnRef, SimpleExpr};
+use sea_orm::sea_query::{Iden, SeaRc, ColumnRef, SimpleExpr};
 use crate::db::entity::{
-    books, 
     v_books_details, 
     v_books_people_details, 
     v_books_with_contents,
-    people,
-    contents,
-    contents_types,
-    publishers,
-    series,
 };
 use serde::{Deserialize, Serialize};
 

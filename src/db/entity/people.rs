@@ -2,7 +2,6 @@
 // src/db/entity/people.rs
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
-use sea_orm::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "people")]

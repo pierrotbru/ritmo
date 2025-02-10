@@ -28,4 +28,16 @@ pub enum Relation {
     contents,
 }
 
+impl Related<super::books::Entity> for Entity {  // Implementazione per books
+    fn to() -> RelationDef {
+        Relation::books.def().rev() // Usa .rev() per la relazione inversa
+    }
+}
+
+impl Related<super::contents::Entity> for Entity { // Implementazione per contents
+    fn to() -> RelationDef {
+        Relation::contents.def().rev() // Usa .rev() per la relazione inversa
+    }
+}
+
 impl ActiveModelBehavior for ActiveModel {}
