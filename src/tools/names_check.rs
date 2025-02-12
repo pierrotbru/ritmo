@@ -3,7 +3,7 @@ use sea_orm::DatabaseConnection;
 use crate::RitmoErr;
 use strsim::{jaro, jaro_winkler}; 
 use unicode_normalization::UnicodeNormalization;  
-use crate::db::entity::people;
+use crate::ritmo_db::entities::people;
 use rayon::prelude::*;
 
 /// Normalize a name by converting to lowercase, removing diacritics, and trimming

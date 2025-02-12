@@ -6,14 +6,14 @@ use tracing_subscriber;
 use tracing;
 
 mod errors;
-mod db;
+mod ritmo_db;
 mod tools;
-mod import;
+mod cal_import;
+mod connection;
 
 use tools::names_check::{check_names, compare_single_name};
-use db::connection::establish_connection;
-use crate::import::import_main;
-use db::do_filter::get_book_ids_by_person_name;
+use connection::connection::establish_connection;
+use ritmo_db::do_filter::get_book_ids_by_person_name;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about)]
@@ -100,13 +100,8 @@ async fn main() -> Result<(), RitmoErr> {
             let _conn = establish_connection(&path, true).await?;
         },
         Commands::Import { source, destination } => {
-            let conn = establish_connection(&destination, true).await?;
-            drop(conn);
-            let conn = establish_connection(&source, false).await?;
-            drop(conn);
-
-            let _ = import_main::copy_data_from_calibre_db(&source, &destination).await?;
-
+            let conn_dst = establish_connection(&destination, true).await?;
+            let conn_src = establish_connection(&source, false).await?;
         },
         Commands::List { path: _ , id: _ } => {
         }
