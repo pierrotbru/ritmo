@@ -1,47 +1,51 @@
-use sea_orm_migration::prelude::JoinType;
-use crate::db::entity;
-use crate::RitmoErr;
-use sea_orm::{
-    DatabaseConnection, 
-    EntityTrait, 
-    QueryFilter,
-    ColumnTrait,
-    QuerySelect,
-    RelationTrait
-};
+use sea_orm::ColumnTrait;
+use sea_orm::QueryFilter;
+use sea_orm::DbErr;
+use sea_orm::EntityTrait;
+use sea_orm::DatabaseConnection;
 
-pub async fn get_book_ids_by_person_name(
-    db: &DatabaseConnection,
-    person_name: &str,
-) -> Result<Vec<i64>, RitmoErr> {
-    let person = PeopleEntity::find()
-        .filter(PeopleColumn::Name.contains(person_name))
-        .one(db)
+use crate::db::entity::{prelude::*, *};
+
+pub async fn get_book_ids_by_person_name(conn: &DatabaseConnection, person_name: &str) -> Result<Vec<i32>, DbErr> {
+//    let person = people::Entity::find()
+//        .filter(people::Column::Name.like(format!("%{}%",person_name)))
+//        .one(conn)
+//        .await?;
+
+    let person = match people::Entity::find()
+        .filter(people::Column::Name.like(format!("%{}%", person_name)))
+        .one(conn)
         .await
-        .map_err(|e| RitmoErr::DatabaseError(e.to_string()))?;
-
-    println!("100");
-
-    let person_id = match person {
-        Some(p) => p.id,
-        None => return Ok(vec![]), // Gestisci il caso in cui la persona non viene trovata
+    {
+        Ok(person) => person,
+        Err(err) => {
+            return Err(err); // Propaga l'errore
+        }
     };
 
-    println!("200");
+    if let Some(person) = person {
+        let contents_relations = contents_people::Entity::find()
+            .filter(contents_people::Column::PersonId.eq(person.id))
+            .find_also_related(contents::Entity)
+            .all(conn)
+            .await?;
 
-    let book_ids: Vec<i64> = ContentsPeopleEntity::find()
-        .filter(ContentsPeopleColumn::PersonId.eq(person_id))
-        .join(JoinType::InnerJoin, BooksContents::Relation::Contents.def()) // Join con contents_books attraverso contents
-        .select_only()
-        .column(BooksContentsColumn::BookId)
-        .into_tuple::<(i64,)>()
-        .all(db)
-        .await
-        .map_err(|e| RitmoErr::DatabaseError(e.to_string()))?
-        .into_iter()
-        .map(|(book_id,)| BookId)
-        .collect();
+        let mut book_ids = Vec::new();
+        for (_, content_opt) in contents_relations {
+            if let Some(content) = content_opt { // Gestisci l'Option<contents::Model>
+                book_ids.extend(
+                    books_contents::Entity::find()
+                        .filter(books_contents::Column::ContentId.eq(content.id))
+                        .all(conn)
+                        .await?
+                        .into_iter()
+                        .map(|bc| bc.book_id),
+                );
+            }
+        }
 
-    Ok(book_ids)
+        Ok(book_ids)
+    } else {
+        Ok(Vec::new())
+    }
 }
-

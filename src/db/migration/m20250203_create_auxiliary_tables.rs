@@ -75,7 +75,7 @@ impl MigrationTrait for Migration {
             .await?;
             create_laverdure_table(manager).await?;
             seed_laverdure_table(manager).await?;
-            seed_languages_names_table(manager).await?;
+//            seed_languages_names_table(manager).await?;
 
         Ok(())
     }
@@ -171,7 +171,7 @@ async fn seed_laverdure_table(manager: &SchemaManager<'_>) -> Result<(), DbErr> 
 
     Ok(())
 }
-
+/*
 async fn get_languages_names() -> Result<Vec<(String, String)>, DbErr> {
     let path = Path::new("./resources/iso-639-2.tab");
 
@@ -240,3 +240,4 @@ async fn seed_languages_names_table(manager: &SchemaManager<'_>) -> Result<(), D
 
     Ok(())
 }
+*/

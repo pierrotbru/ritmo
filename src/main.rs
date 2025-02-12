@@ -1,8 +1,9 @@
-use db::data_editing::get_books::get_view_bwc;
 use crate::errors::RitmoErr;
 use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use tokio;
+use tracing_subscriber;
+use tracing;
 
 mod errors;
 mod db;
@@ -86,6 +87,12 @@ enum Commands {
 
 #[tokio::main] 
 async fn main() -> Result<(), RitmoErr> {
+
+//    tracing_subscriber::fmt()
+//    .with_max_level(tracing::Level::DEBUG)
+//    .with_test_writer()
+//    .init();
+
     let cli = Cli::parse();
 
     match &cli.command {
@@ -101,12 +108,7 @@ async fn main() -> Result<(), RitmoErr> {
             let _ = import_main::copy_data_from_calibre_db(&source, &destination).await?;
 
         },
-        Commands::List { path, id } => {
-            let db = establish_connection(&path, false).await?;
-
-            let book_w_contents = get_view_bwc(&db, *id).await?;
-            println!("{:?}", book_w_contents);
-
+        Commands::List { path: _ , id: _ } => {
         }
         Commands::Names { path } => {
             let conn = establish_connection(&path, false).await?;

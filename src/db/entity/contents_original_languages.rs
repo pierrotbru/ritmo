@@ -3,43 +3,43 @@
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
-#[sea_orm(table_name = "books_tags")]
+#[sea_orm(table_name = "contents_original_languages")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub book_id: i32,
+    pub content_id: i32,
     #[sea_orm(primary_key, auto_increment = false)]
-    pub tag_id: i32,
+    pub orig_lang_id: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::books::Entity",
-        from = "Column::BookId",
-        to = "super::books::Column::Id",
+        belongs_to = "super::contents::Entity",
+        from = "Column::ContentId",
+        to = "super::contents::Column::Id",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    Books,
+    Contents,
     #[sea_orm(
-        belongs_to = "super::tags::Entity",
-        from = "Column::TagId",
-        to = "super::tags::Column::Id",
+        belongs_to = "super::original_languages::Entity",
+        from = "Column::OrigLangId",
+        to = "super::original_languages::Column::Id",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    Tags,
+    OriginalLanguages,
 }
 
-impl Related<super::books::Entity> for Entity {
+impl Related<super::contents::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Books.def()
+        Relation::Contents.def()
     }
 }
 
-impl Related<super::tags::Entity> for Entity {
+impl Related<super::original_languages::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Tags.def()
+        Relation::OriginalLanguages.def()
     }
 }
 
