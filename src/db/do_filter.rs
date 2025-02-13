@@ -56,17 +56,18 @@ pub async fn get_book_ids_by_current_language(
     language_name: &str
 ) -> Result<Vec<i64>, RitmoErr> {
     let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
-        "SELECT DISTINCT b.id AS book_id 
-         FROM books b
-         JOIN books_contents bc ON b.id = bc.book_id
-         JOIN contents c ON bc.content_id = c.id
-         JOIN contents_current_languages ccl ON c.id = ccl.content_id
-         JOIN current_languages cl ON ccl.curr_lang_id = cl.id
-         WHERE cl.lang_code IS "
+        "SELECT DISTINCT b.id AS book_id
+        FROM books b
+        JOIN books_contents bc ON b.id = bc.book_id
+        JOIN contents c ON bc.content_id = c.id
+        JOIN contents_current_languages ccl ON c.id = ccl.content_id
+        JOIN current_languages cl ON ccl.curr_lang_id = cl.id
+        JOIN languages_names ln ON cl.lang_code = ln.id  -- Nuova JOIN
+        WHERE ln.ref_name LIKE"
     );
 
     // Add the language name parameter with wildcard search
-    query_builder.push_bind(language_name);
+    query_builder.push_bind(format!("%{}%",language_name));
 
     // Execute the query and collect book IDs
     let book_ids = query_builder
