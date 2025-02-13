@@ -16,7 +16,7 @@ pub async fn get_book_ids_by_person_name(
     person_name: &str
 ) -> Result<Vec<i64>, RitmoErr> {
     let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
-        "SELECT DISTINCT b.id AS book_id 
+        "SELECT b.id AS book_id 
          FROM books b
          JOIN books_contents bc ON b.id = bc.book_id
          JOIN contents c ON bc.content_id = c.id
@@ -56,7 +56,7 @@ pub async fn get_book_ids_by_current_language(
     language_name: &str
 ) -> Result<Vec<i64>, RitmoErr> {
     let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
-        "SELECT DISTINCT b.id AS book_id
+        "SELECT b.id AS book_id
         FROM books b
         JOIN books_contents bc ON b.id = bc.book_id
         JOIN contents c ON bc.content_id = c.id
