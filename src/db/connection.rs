@@ -1,24 +1,23 @@
 // src/db/connection.rs
+use sqlx::SqlitePool;
 use std::path::Path;
 use csv::ReaderBuilder;
-use sea_orm::{Database, DatabaseConnection, ConnectOptions};
+use sea_orm::Database;
+use sea_orm::SqlxSqliteConnector;
 use sea_orm_migration::prelude::*;
 use std::path::PathBuf;
 use std::fs;
-use std::time::Duration;
 
 use crate::errors::RitmoErr;
 use crate::db::migration::Migrator;
 use crate::db::verify_path::verify_path;
 
-use sea_orm::ColumnTrait;
-use sea_orm::QueryFilter;
 use sea_orm::DbErr;
 use sea_orm::EntityTrait;
 use sea_orm::Set;
-use crate::db::entity::{prelude::*, *};
+use crate::db::entity::prelude::*;
 
-
+/*
 pub async fn establish_connection(path: &PathBuf, create: bool) -> Result<DatabaseConnection, RitmoErr> {
     // call verify_path to check if the db_path is valid
     let db_path = verify_path(path, create)?;
@@ -65,6 +64,7 @@ pub async fn establish_connection(path: &PathBuf, create: bool) -> Result<Databa
 
     Ok(connection)
 }
+*/
 
 async fn get_languages_names() -> Result<Vec<(String, String)>, DbErr> {
     let path = Path::new("./resources/iso-639-2.tab");
@@ -110,7 +110,10 @@ async fn get_languages_names() -> Result<Vec<(String, String)>, DbErr> {
     Ok(language_names)
 }
 
-async fn seed_languages_names_table(conn: &DatabaseConnection) -> Result<(), DbErr> {
+async fn seed_languages_names_table(pool: &SqlitePool) -> Result<(), RitmoErr> {
+
+    let conn = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool.clone().clone());
+
     let languages = get_languages_names().await?;
 
     if languages.is_empty() {
@@ -128,7 +131,39 @@ async fn seed_languages_names_table(conn: &DatabaseConnection) -> Result<(), DbE
         iso_table.push(iso_single);
     }
 
-    let _ = LanguagesNames::insert_many(iso_table).exec(conn).await?;
+    let _ = LanguagesNames::insert_many(iso_table).exec(&conn).await?;
 
     Ok(())
+}
+
+pub async fn create_pool(path: &PathBuf, create: bool) -> Result<SqlitePool, RitmoErr> {
+    // call verify_path to check if the db_path is valid
+    let db_path = verify_path(path, create)?;
+
+    if create {
+        fs::File::create(db_path.clone())
+            .map_err(|e| RitmoErr::DatabaseCreationFailed(
+                format!("Failed to create database file at {}: {}", db_path.display(), e)
+            ))?;   
+    }
+
+    // Construct the database URL with explicit SQLite driver
+    let database_url = format!("sqlite:///{}", db_path.to_string_lossy());
+    
+    let pool = SqlitePool::connect(&database_url).await?;
+    let conn = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool.clone());    
+
+    // Run migrations if create is true
+    if create {
+        Migrator::up(&conn, None)
+            .await
+            .map_err(|e| RitmoErr::DatabaseMigrationFailed(
+                format!("Failed to run migrations: {}", e)
+            ))?;
+
+        // after migration try to copy all the iso codes and names
+        seed_languages_names_table(&pool).await?;
+    }
+
+    Ok(pool)
 }

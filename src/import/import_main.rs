@@ -1,13 +1,14 @@
-//use sea_orm::DbErr;
-//use sea_orm::{DatabaseConnection};
-use crate::db::verify_path::verify_path;
-use std::path::PathBuf;
 use crate::errors::RitmoErr;
-use crate::import::import_formats;
-use crate::import::import_publishers;
-use sqlx::{Row, sqlite::SqliteRow};
+use crate::import::{
+    import_formats,
+    import_publishers,
+};
+use sqlx::{
+    Row,
+    sqlite::SqliteRow,
+    sqlite::SqlitePool,
+};
 use std::collections::HashMap;
-use sqlx::sqlite::{SqlitePool, SqliteConnectOptions}; 
 
 /// Represents a table import configuration
 struct TableImportConfig {
@@ -30,25 +31,10 @@ fn get_row_value<T: sqlx::Type<sqlx::Sqlite> + for<'r> sqlx::Decode<'r, sqlx::Sq
 
 /// Import data from Calibre database to the current database
 pub async fn copy_data_from_calibre_db(
-    src : &PathBuf, 
-    dst: &PathBuf
+    calibre_conn : &SqlitePool, 
+    my_conn: &SqlitePool
 ) -> Result<HashMap<String, Vec<(i64, String)>>, RitmoErr> {
 
-    let tmpsrc = verify_path(&src, false)?;
-    let tmpdst = verify_path(&dst, false)?;
-
-    // create a sqlx connection to the Calibre database
-    let options = SqliteConnectOptions::new()
-        .filename(tmpsrc)
-        .create_if_missing(false);
-    let calibre_conn = SqlitePool::connect_with(options).await?;
-
-    // create a sqlx connection to the Calibre database
-    let options = SqliteConnectOptions::new()
-        .filename(tmpdst)
-        .create_if_missing(false);
-    let my_conn = SqlitePool::connect_with(options).await?;
-    
     let mut import_errors: HashMap<String, Vec<(i64, String)>> = HashMap::new();
 
     // Define table import configurations
@@ -136,7 +122,7 @@ pub async fn copy_data_from_calibre_db(
     for config in &table_configs {
         // Fetch rows from Calibre database
         let calibre_rows = sqlx::query(config.calibre_query)
-            .fetch_all(&calibre_conn)
+            .fetch_all(calibre_conn)
             .await
             .map_err(|e| RitmoErr::ImportError(
                 format!("Failed to fetch rows for table {}: {}", config.table_name, e)

@@ -1,3 +1,6 @@
+use crate::db::do_filter::get_book_ids_by_current_language;
+use crate::db::do_filter::get_book_ids_by_person_name;
+use crate::db::connection::create_pool;
 use crate::errors::RitmoErr;
 use std::path::PathBuf;
 use clap::{Parser, Subcommand};
@@ -11,9 +14,9 @@ mod tools;
 mod import;
 
 use tools::names_check::{check_names, compare_single_name};
-use db::connection::establish_connection;
+//use db::connection::create_pool;
 use crate::import::import_main;
-use db::do_filter::get_book_ids_by_person_name;
+//use db::do_filter::get_book_ids_by_person_name;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about)]
@@ -80,7 +83,7 @@ enum Commands {
         #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
         path: PathBuf,
 
-        #[arg(short, long, help = "Name to compare", default_value = "Smith")]
+        #[arg(short, long, help = "Name to compare", default_value = "a")]
         name: String,
     },
 }
@@ -89,21 +92,27 @@ enum Commands {
 async fn main() -> Result<(), RitmoErr> {
 
 //    tracing_subscriber::fmt()
-//    .with_max_level(tracing::Level::DEBUG)
-//    .with_test_writer()
-//    .init();
-
+//        .with_max_level(tracing::Level::DEBUG)
+//        .with_target(false)
+//        .with_thread_ids(true)
+//        .with_thread_names(true)
+//        .with_file(true)
+//        .with_line_number(true)
+//        .init();
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::DEBUG)
+        .with_target(false)
+        .with_env_filter("sqlx=debug")
+        .init();
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::New { path } => {
-            let _conn = establish_connection(&path, true).await?;
+            let _conn = create_pool(&path, true).await?;
         },
-        Commands::Import { source, destination } => {
-            let conn = establish_connection(&destination, true).await?;
-            drop(conn);
-            let conn = establish_connection(&source, false).await?;
-            drop(conn);
+      Commands::Import { source, destination } => {
+            let destination = create_pool(&destination, true).await?;
+            let source = create_pool(&source, false).await?;
 
             let _ = import_main::copy_data_from_calibre_db(&source, &destination).await?;
 
@@ -111,28 +120,36 @@ async fn main() -> Result<(), RitmoErr> {
         Commands::List { path: _ , id: _ } => {
         }
         Commands::Names { path } => {
-            let conn = establish_connection(&path, false).await?;
+            let conn = create_pool(&path, false).await?;
             let names = check_names(&conn, 0.96, 0.93).await?;
             for n in names {
                 println!("{:?}", n);
             }            
         }
         Commands::Check { path, name} => {
-            let conn = establish_connection(&path, false).await?;
+            let conn = create_pool(&path, false).await?;
             let names = compare_single_name(&conn, (&name).to_string(), 0.6, 0.6).await?;
             for n in names {
                 println!("{:?}", n);
             }            
         }
         Commands::Search { path, name } => {
-            let conn = establish_connection(&path, false).await?;
+            let pool = create_pool(&path, false).await?;
 
             println!("Cerco nel database {:?} i libri di {:?}", path, name );
+//
+//            let names = get_book_ids_by_person_name(&conn, &name).await?;
+//            for n in names {
+//                println!("{:?}", n);
+//            }      
 
-            let names = get_book_ids_by_person_name(&conn, &name).await?;
-            for n in names {
-                println!("{:?}", n);
-            }            
+            let book_ids = get_book_ids_by_person_name(&pool, name).await?;
+            println!("trovati {:?} libri scritti da {}", book_ids.len(), name);
+
+            let book_ids = get_book_ids_by_current_language(&pool, "eng").await?;
+            println!("trovati {:?} libri in inglese", book_ids.len());
+
+
         }
     }
     Ok(())

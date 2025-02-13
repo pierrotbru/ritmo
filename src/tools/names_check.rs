@@ -1,5 +1,6 @@
+use sqlx::SqlitePool;
+use sea_orm::SqlxSqliteConnector;
 use sea_orm::EntityTrait;
-use sea_orm::DatabaseConnection;
 use crate::RitmoErr;
 use strsim::{jaro, jaro_winkler}; 
 use unicode_normalization::UnicodeNormalization;  
@@ -45,7 +46,7 @@ async fn compare_names(names: Vec<String>, jaro_winkler_threshold: f64, jaro_thr
     Ok(similar_names)
 }
 
-pub async fn check_names(path: &DatabaseConnection, jw_th: f64, j_th: f64) -> Result<Vec<(String, String, f64, f64)>, RitmoErr> {
+pub async fn check_names(path: &SqlitePool, jw_th: f64, j_th: f64) -> Result<Vec<(String, String, f64, f64)>, RitmoErr> {
 
     // query all names in people table
     let names: Vec<String> = get_names_list(path).await?;
@@ -53,8 +54,11 @@ pub async fn check_names(path: &DatabaseConnection, jw_th: f64, j_th: f64) -> Re
     compare_names(names, jw_th, j_th).await
 }
 
-async fn get_names_list(path: &DatabaseConnection) -> Result<Vec<String>, RitmoErr> { // Use DbErr, or RitmoErr if it's defined as Result<..., DbErr>
-    let people_result = people::Entity::find().all(path).await; // Store the Result
+async fn get_names_list(pool: &SqlitePool) -> Result<Vec<String>, RitmoErr> { // Use DbErr, or RitmoErr if it's defined as Result<..., DbErr>
+    
+    let path = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool.clone());
+
+    let people_result = people::Entity::find().all(&path).await; // Store the Result
 
     match people_result {
         Ok(people) => {
@@ -65,8 +69,9 @@ async fn get_names_list(path: &DatabaseConnection) -> Result<Vec<String>, RitmoE
     }
 }
 
-pub async fn compare_single_name(path: &DatabaseConnection, target_name: String, jaro_winkler_threshold: f64, jaro_threshold: f64) -> Result<Vec<(String, String)>, RitmoErr> {
-    let names: Vec<String> = get_names_list(path).await?;
+pub async fn compare_single_name(pool: &SqlitePool, target_name: String, jaro_winkler_threshold: f64, jaro_threshold: f64) -> Result<Vec<(String, String)>, RitmoErr> {
+
+    let names: Vec<String> = get_names_list(pool).await?;
 
     // Normalize the target name
     let normalized_target = normalize_name(&target_name);
