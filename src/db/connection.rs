@@ -1,4 +1,4 @@
-// src/db/connection.rs
+use std::time::Instant;
 use sqlx::SqlitePool;
 use std::path::Path;
 use csv::ReaderBuilder;
@@ -112,13 +112,14 @@ async fn get_languages_names() -> Result<Vec<(String, String)>, DbErr> {
 
 async fn seed_languages_names_table(pool: &SqlitePool) -> Result<(), RitmoErr> {
 
-    let conn = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool.clone().clone());
+    let conn = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool.clone());
 
     let languages = get_languages_names().await?;
 
     if languages.is_empty() {
         return Ok(()); // Nothing to insert
     }
+    let start = Instant::now();
 
     let mut iso_table : Vec<crate::db::entity::languages_names::ActiveModel> = Vec::new();
 
@@ -133,9 +134,39 @@ async fn seed_languages_names_table(pool: &SqlitePool) -> Result<(), RitmoErr> {
 
     let _ = LanguagesNames::insert_many(iso_table).exec(&conn).await?;
 
+    let duration = start.elapsed();
+    println!("SeaORM: {:?}", duration);
     Ok(())
 }
 
+/*
+async fn seed_languages_names_table(pool: &SqlitePool) -> Result<(), RitmoErr> {
+    let languages = get_languages_names().await?;
+
+    if languages.is_empty() {
+        return Ok(()); // Nothing to insert
+    }
+    let start = Instant::now();
+
+    let mut transaction = pool.begin().await?; // Inizia una transazione
+
+    for (iso_code, language_name) in languages {
+        sqlx::query(
+            "INSERT INTO languages_names (id, ref_name) VALUES (?, ?)",
+        )
+        .bind(iso_code)
+        .bind(language_name)
+        .execute(&mut *transaction) // Usa la transazione
+        .await?;
+    }
+
+    transaction.commit().await?; // Commit della transazione
+
+    let duration = start.elapsed();
+    println!("sqlx: {:?}", duration);
+    Ok(())
+}
+*/
 pub async fn create_pool(path: &PathBuf, create: bool) -> Result<SqlitePool, RitmoErr> {
     // call verify_path to check if the db_path is valid
     let db_path = verify_path(path, create)?;
