@@ -118,6 +118,15 @@ impl Related<super::original_languages::Entity> for Entity {
     }
 }
 
+impl Related<super::people::Entity> for Entity {
+    fn to() -> RelationDef {
+        super::contents_people::Relation::People.def()
+    }
+    fn via() -> Option<RelationDef> {
+        Some(super::contents_people::Relation::Contents.def().rev())
+    }
+}
+
 impl Related<super::source_languages::Entity> for Entity {
     fn to() -> RelationDef {
         super::contents_source_languages::Relation::SourceLanguages.def()

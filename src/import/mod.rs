@@ -1,3 +1,10 @@
 pub mod import_main;
 pub mod import_formats;
 pub mod import_publishers;
+pub mod import_people;
+pub mod import_tags;
+pub mod import_current_languages;
+pub mod import_books;
+pub mod import_books_tags;
+pub mod import_contents_people;
+pub mod import_contents_current_languages;

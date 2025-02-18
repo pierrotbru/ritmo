@@ -101,6 +101,15 @@ impl Related<super::contents::Entity> for Entity {
     }
 }
 
+impl Related<super::people::Entity> for Entity {
+    fn to() -> RelationDef {
+        super::books_people::Relation::People.def()
+    }
+    fn via() -> Option<RelationDef> {
+        Some(super::books_people::Relation::Books.def().rev())
+    }
+}
+
 impl Related<super::tags::Entity> for Entity {
     fn to() -> RelationDef {
         super::books_tags::Relation::Tags.def()

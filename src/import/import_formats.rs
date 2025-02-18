@@ -5,23 +5,16 @@ use std::collections::HashMap;
 // Costante per la query di inserimento (può stare anche qui)
 const INSERT_FORMAT_QUERY: &str = "INSERT INTO Formats (format_name) VALUES (?)";
 
-pub async fn sync_formats(
-    calibre_conn: &SqlitePool,
-    my_conn: &SqlitePool,
-    import_errors: &mut HashMap<String, Vec<(i64, String)>>,
-) -> Result<(), RitmoErr> {
-    // 1. Leggi i formati e gli ID dei libri da Calibre
+pub async fn sync_formats(calibre_conn: &SqlitePool, my_conn: &SqlitePool) -> Result<(), RitmoErr> {
+
     let books_formats = sqlx::query("SELECT b.id AS book_id, d.format AS format_name FROM books b INNER JOIN data d ON b.id = d.book")
         .fetch_all(calibre_conn)
         .await
         .map_err(|e| RitmoErr::ImportError(format!("Failed to fetch book formats from Calibre: {}", e)))?;
 
-    println!("letti i formati");
     let mut tx = my_conn.begin().await
         .map_err(|e| RitmoErr::ImportError(format!("Failed to start format sync transaction: {}", e)))?;
 
-    println!("inizio transazione");
-    // 2. Itera sui formati e aggiorna Books
     for book_format in books_formats {
         let book_id: i64 = book_format.try_get("book_id")
             .map_err(|e| RitmoErr::ImportError(format!("Failed to get book id from Calibre data: {}", e)))?;
@@ -50,15 +43,11 @@ pub async fn sync_formats(
         };
 
         // 4. Aggiorna la tabella Books con il format_id
-        let update_result = sqlx::query("UPDATE Books SET format_id = ? WHERE id = ?")
+        let _ = sqlx::query("UPDATE Books SET format_id = ? WHERE id = ?")
             .bind(format_id)
             .bind(book_id)
             .execute(&mut *tx)
-            .await;
-
-        if let Err(e) = update_result {
-            import_errors.entry("Books Update".to_string()).or_default().push((book_id, format!("Update format_id for book {} failed: {}", book_id, e)));
-        }
+            .await?;
     }
     tx.commit().await
         .map_err(|e| RitmoErr::ImportError(format!("Failed to commit format sync transaction: {}", e)))?;
