@@ -576,51 +576,58 @@ CREATE VIEW IF NOT EXISTS v_full_books AS
            s.series AS series_name,
            s.series_id,
            b.series_index,
-           GROUP_CONCAT(DISTINCT t.tag_name) AS book_tags,
-           GROUP_CONCAT(DISTINCT pe.name || ' (' || r.name || ')') AS book_people,
-           GROUP_CONCAT(DISTINCT c.title) AS content_titles,-- Titoli dei contenuti
-           GROUP_CONCAT(DISTINCT c.original_title) AS content_original_titles,-- Titoli originali dei contenuti
-           GROUP_CONCAT(DISTINCT c.publication_date) AS content_publication_dates,-- Date di pubblicazione dei contenuti
-           GROUP_CONCAT(DISTINCT c.notes) AS content_notes,-- Note dei contenuti
-           GROUP_CONCAT(DISTINCT ct.type_name) AS content_types,-- Tipi di contenuto
-           GROUP_CONCAT(DISTINCT cl.lang_code) AS content_current_languages,-- Lingue correnti dei contenuti
-           GROUP_CONCAT(DISTINCT ol.lang_code) AS content_original_languages,-- Lingue originali dei contenuti
-           GROUP_CONCAT(DISTINCT sl.lang_code) AS content_source_languages-- Lingue sorgente dei contenuti
+           (SELECT GROUP_CONCAT(DISTINCT tag_name) 
+            FROM books_tags bt 
+            JOIN tags t ON bt.tag_id = t.id 
+            WHERE bt.book_id = b.id) AS book_tags,
+           (SELECT GROUP_CONCAT(DISTINCT pe.name || ' (' || COALESCE(r.name, 'Unknown Role') || ')') 
+            FROM books_people bp 
+            JOIN people pe ON bp.person_id = pe.id 
+            LEFT JOIN roles r ON pe.role = r.id 
+            WHERE bp.book_id = b.id) AS book_people,
+           (SELECT GROUP_CONCAT(DISTINCT c.title) 
+            FROM books_contents bc 
+            JOIN contents c ON bc.content_id = c.id 
+            WHERE bc.book_id = b.id) AS content_titles,
+           (SELECT GROUP_CONCAT(DISTINCT c.original_title) 
+            FROM books_contents bc 
+            JOIN contents c ON bc.content_id = c.id 
+            WHERE bc.book_id = b.id) AS content_original_titles,
+           (SELECT GROUP_CONCAT(DISTINCT c.publication_date) 
+            FROM books_contents bc 
+            JOIN contents c ON bc.content_id = c.id 
+            WHERE bc.book_id = b.id) AS content_publication_dates,
+           (SELECT GROUP_CONCAT(DISTINCT c.notes) 
+            FROM books_contents bc 
+            JOIN contents c ON bc.content_id = c.id 
+            WHERE bc.book_id = b.id) AS content_notes,
+           (SELECT GROUP_CONCAT(DISTINCT ct.type_name) 
+            FROM books_contents bc 
+            JOIN contents c ON bc.content_id = c.id 
+            JOIN contents_types ct ON c.type_id = ct.id 
+            WHERE bc.book_id = b.id) AS content_types,
+           (SELECT GROUP_CONCAT(DISTINCT cl.lang_code) 
+            FROM books_contents bc 
+            JOIN contents c ON bc.content_id = c.id 
+            JOIN contents_current_languages ccl ON c.id = ccl.content_id 
+            JOIN current_languages cl ON ccl.curr_lang_id = cl.id 
+            WHERE bc.book_id = b.id) AS content_current_languages,
+           (SELECT GROUP_CONCAT(DISTINCT ol.lang_code) 
+            FROM books_contents bc 
+            JOIN contents c ON bc.content_id = c.id 
+            JOIN contents_original_languages col ON c.id = col.content_id 
+            JOIN original_languages ol ON col.orig_lang_id = ol.id 
+            WHERE bc.book_id = b.id) AS content_original_languages,
+           (SELECT GROUP_CONCAT(DISTINCT sl.lang_code) 
+            FROM books_contents bc 
+            JOIN contents c ON bc.content_id = c.id 
+            JOIN contents_source_languages csl ON c.id = csl.content_id 
+            JOIN source_languages sl ON csl.source_lang_id = sl.id 
+            WHERE bc.book_id = b.id) AS content_source_languages
       FROM books AS b
-           LEFT JOIN
-           publishers AS p ON b.publisher_id = p.id
-           LEFT JOIN
-           formats AS f ON b.format_id = f.id
-           LEFT JOIN
-           series AS s ON b.series_id = s.series_id
-           LEFT JOIN
-           books_tags AS bt ON b.id = bt.book_id
-           LEFT JOIN
-           tags AS t ON bt.tag_id = t.id
-           LEFT JOIN
-           books_people AS bp ON b.id = bp.book_id
-           LEFT JOIN
-           people AS pe ON bp.person_id = pe.id
-           LEFT JOIN
-           books_contents AS bc ON b.id = bc.book_id
-           LEFT JOIN
-           contents AS c ON bc.content_id = c.id
-           LEFT JOIN
-           contents_types AS ct ON c.type_id = ct.id
-           LEFT JOIN
-           contents_current_languages AS ccl ON c.id = ccl.content_id
-           LEFT JOIN
-           current_languages AS cl ON ccl.curr_lang_id = cl.id
-           LEFT JOIN
-           contents_original_languages AS col ON c.id = col.content_id
-           LEFT JOIN
-           original_languages AS ol ON col.orig_lang_id = ol.id
-           LEFT JOIN
-           contents_source_languages AS csl ON c.id = csl.content_id
-           LEFT JOIN
-           source_languages AS sl ON csl.source_lang_id = sl.id
-     GROUP BY b.id;
-
+           LEFT JOIN publishers AS p ON b.publisher_id = p.id
+           LEFT JOIN formats AS f ON b.format_id = f.id
+           LEFT JOIN series AS s ON b.series_id = s.series_id;
 
 -- View: v_full_contents
 DROP VIEW IF EXISTS v_full_contents;
@@ -631,43 +638,34 @@ CREATE VIEW IF NOT EXISTS v_full_contents AS
            c.publication_date AS issue_date,
            c.notes AS content_notes,
            ct.type_name,
-           GROUP_CONCAT(DISTINCT t.tag_name) AS content_tags,
-           GROUP_CONCAT(DISTINCT pe.name || ' (' || r.name || ')') AS content_people,
-           GROUP_CONCAT(DISTINCT cl.lang_code) AS content_current_languages,
-           GROUP_CONCAT(DISTINCT ol.lang_code) AS content_original_languages,
-           GROUP_CONCAT(DISTINCT sl.lang_code) AS content_source_languages,
-           b.id AS book_id,-- ID del libro
-           b.title AS book_title,-- Titolo del libro
-           b.original_title AS book_original_title-- Titolo originale del libro
+           (SELECT GROUP_CONCAT(DISTINCT t.tag_name) 
+            FROM contents_tags ctg 
+            JOIN tags t ON ctg.tag_id = t.id 
+            WHERE ctg.content_id = c.id) AS content_tags,
+           (SELECT GROUP_CONCAT(DISTINCT pe.name || ' (' || COALESCE(r.name, 'Unknown Role') || ')') 
+            FROM contents_people cp 
+            JOIN people pe ON cp.person_id = pe.id 
+            LEFT JOIN roles r ON pe.role = r.id 
+            WHERE cp.content_id = c.id) AS content_people,
+           (SELECT GROUP_CONCAT(DISTINCT cl.lang_code) 
+            FROM contents_current_languages ccl 
+            JOIN current_languages cl ON ccl.curr_lang_id = cl.id 
+            WHERE ccl.content_id = c.id) AS content_current_languages,
+           (SELECT GROUP_CONCAT(DISTINCT ol.lang_code) 
+            FROM contents_original_languages col 
+            JOIN original_languages ol ON col.orig_lang_id = ol.id 
+            WHERE col.content_id = c.id) AS content_original_languages,
+           (SELECT GROUP_CONCAT(DISTINCT sl.lang_code) 
+            FROM contents_source_languages csl 
+            JOIN source_languages sl ON csl.source_lang_id = sl.id 
+            WHERE csl.content_id = c.id) AS content_source_languages,
+           b.id AS book_id,
+           b.title AS book_title,
+           b.original_title AS book_original_title
       FROM contents AS c
-           LEFT JOIN
-           contents_types AS ct ON c.type_id = ct.id
-           LEFT JOIN
-           contents_tags AS ctg ON c.id = ctg.content_id
-           LEFT JOIN
-           tags AS t ON ctg.tag_id = t.id
-           LEFT JOIN
-           contents_people AS cp ON c.id = cp.content_id
-           LEFT JOIN
-           people AS pe ON cp.person_id = pe.id
-           LEFT JOIN
-           contents_current_languages AS ccl ON c.id = ccl.content_id
-           LEFT JOIN
-           current_languages AS cl ON ccl.curr_lang_id = cl.id
-           LEFT JOIN
-           contents_original_languages AS col ON c.id = col.content_id
-           LEFT JOIN
-           original_languages AS ol ON col.orig_lang_id = ol.id
-           LEFT JOIN
-           contents_source_languages AS csl ON c.id = csl.content_id
-           LEFT JOIN
-           source_languages AS sl ON csl.source_lang_id = sl.id
-           LEFT JOIN
-           books_contents AS bc ON c.id = bc.content_id-- JOIN con la tabella books_contents
-           LEFT JOIN
-           books AS b ON bc.book_id = b.id-- JOIN con la tabella books
-     GROUP BY c.id;
-
+           LEFT JOIN contents_types AS ct ON c.type_id = ct.id
+           LEFT JOIN books_contents AS bc ON c.id = bc.content_id
+           LEFT JOIN books AS b ON bc.book_id = b.id;
 
 COMMIT TRANSACTION;
 PRAGMA foreign_keys = on;

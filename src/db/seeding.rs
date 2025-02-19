@@ -55,11 +55,11 @@ async fn get_languages_names() -> Result<Vec<(String, String)>, DbErr> {
                         language_names.push((val0.to_string(), val3.to_string()));
                     }
                     _ => {
-                        return Err(DbErr::Custom("Dati mancanti nel record (colonna 0 o 3)".to_string()));
+                        return Err(DbErr::Custom("Data record not found (column 0 or 3)".to_string()));
                     }
                 }
             }
-            Err(e) => return Err(DbErr::Custom(format!("Errore leggendo un record CSV: {}", e))),
+            Err(e) => return Err(DbErr::Custom(format!("CSV record error: {}", e))),
         }
     }
 

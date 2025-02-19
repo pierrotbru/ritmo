@@ -136,18 +136,13 @@ async fn main() -> Result<(), RitmoErr> {
         Commands::Search { path, name } => {
             let pool = create_pool(&path, false).await?;
 
-            println!("Cerco nel database {:?} i libri di {:?}", path, name );
-//
-//            let names = get_book_ids_by_person_name(&conn, &name).await?;
-//            for n in names {
-//                println!("{:?}", n);
-//            }      
+            println!("Searching database {:?} for {:?} books", path, name );
 
             let book_ids = get_book_ids_by_person_name(&pool, name).await?;
-            println!("trovati {:?} libri scritti da {}", book_ids.len(), name);
+            println!("Found {:?} {} books", book_ids.len(), name);
 
             let book_ids = get_book_ids_by_current_language(&pool, "eng").await?;
-            println!("trovati {:?} libri in inglese", book_ids.len());
+            println!("Found {:?} books in english", book_ids.len());
 
 
         }

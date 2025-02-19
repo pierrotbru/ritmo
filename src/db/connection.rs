@@ -14,10 +14,7 @@ pub async fn create_pool(path: &PathBuf, create: bool) -> Result<SqlitePool, Rit
     let db_path = verify_path(path, create)?;
 
     if create {
-        fs::File::create(db_path.clone())
-            .map_err(|e| RitmoErr::DatabaseCreationFailed(
-                format!("Failed to create database file at {}: {}", db_path.display(), e)
-            ))?;   
+        fs::File::create(db_path.clone())?;
     }
 
     // Construct the database URL with explicit SQLite driver
@@ -27,7 +24,7 @@ pub async fn create_pool(path: &PathBuf, create: bool) -> Result<SqlitePool, Rit
 
     // Run migrations if create is true
     if create {
-        pool.execute(include_str!("./sql/create_db.sql"))
+        pool.execute(include_str!("./create_sql/create_db.sql"))
         .await?;
 
         seed_all(&pool).await?;
