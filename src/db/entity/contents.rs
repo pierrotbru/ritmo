@@ -8,13 +8,14 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
     #[sea_orm(column_type = "Text")]
-    pub title: String,
+    pub name: String,
     #[sea_orm(column_type = "Text", nullable)]
     pub original_title: Option<String>,
     pub publication_date: Option<i64>,
     #[sea_orm(column_type = "Text", nullable)]
     pub notes: Option<String>,
     pub type_id: Option<i32>,
+    pub pre_accepted: Option<i32>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -25,8 +26,8 @@ pub enum Relation {
     ContentsCurrentLanguages,
     #[sea_orm(has_many = "super::contents_original_languages::Entity")]
     ContentsOriginalLanguages,
-    #[sea_orm(has_many = "super::contents_people::Entity")]
-    ContentsPeople,
+    #[sea_orm(has_many = "super::contents_people_roles::Entity")]
+    ContentsPeopleRoles,
     #[sea_orm(has_many = "super::contents_source_languages::Entity")]
     ContentsSourceLanguages,
     #[sea_orm(has_many = "super::contents_tags::Entity")]
@@ -59,9 +60,9 @@ impl Related<super::contents_original_languages::Entity> for Entity {
     }
 }
 
-impl Related<super::contents_people::Entity> for Entity {
+impl Related<super::contents_people_roles::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::ContentsPeople.def()
+        Relation::ContentsPeopleRoles.def()
     }
 }
 
@@ -115,15 +116,6 @@ impl Related<super::original_languages::Entity> for Entity {
                 .def()
                 .rev(),
         )
-    }
-}
-
-impl Related<super::people::Entity> for Entity {
-    fn to() -> RelationDef {
-        super::contents_people::Relation::People.def()
-    }
-    fn via() -> Option<RelationDef> {
-        Some(super::contents_people::Relation::Contents.def().rev())
     }
 }
 

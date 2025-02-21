@@ -11,7 +11,7 @@ futures-util = "0.3.31"
 serde = { version = "1.0.217", features = ["derive"] }
 
 # Pin sea-orm to the *exact* same version as sea-orm-migration
-sea-orm = {version = "=0.12.15", features = ["debug-print"]}
+sea-orm = {version = "=0.12.15", features = ["macros", "debug-print", "mock"]}
 sea-orm-migration = { version = "0.12.15", features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
 
 thiserror = "2.0.11"

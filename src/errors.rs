@@ -1,5 +1,5 @@
 use thiserror::Error;
-use sqlx::{Error as SqlxError};
+use sqlx::Error as SqlxError;
 
 #[derive(Error, Debug)]
 pub enum QueryBuilderError {

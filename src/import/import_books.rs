@@ -17,7 +17,7 @@ pub async fn import_books(src: &SqlitePool, dst: &SqlitePool) -> Result<(), Ritm
 
     let start = Instant::now();
 
-    let calibre_rows = sqlx::query("SELECT id, title FROM books")
+    let calibre_rows = sqlx::query("SELECT id, name FROM books")
         .fetch_all(src)
         .await
         .map_err(|e| RitmoErr::ImportError(
@@ -28,7 +28,7 @@ pub async fn import_books(src: &SqlitePool, dst: &SqlitePool) -> Result<(), Ritm
     for row in &calibre_rows {
         let single: crate::db::entity::books::ActiveModel = crate::db::entity::books::ActiveModel {
             id: Set(row.get(0)),
-            title: Set(row.get(1)),
+            name: Set(row.get(1)),
             ..Default::default()
         };
         table.push(single);
@@ -40,7 +40,7 @@ pub async fn import_books(src: &SqlitePool, dst: &SqlitePool) -> Result<(), Ritm
     for row in &calibre_rows {
         let single: crate::db::entity::contents::ActiveModel = crate::db::entity::contents::ActiveModel {
             id: Set(row.get(0)),
-            title: Set(row.get(1)),
+            name: Set(row.get(1)),
             ..Default::default()
         };
         table.push(single);

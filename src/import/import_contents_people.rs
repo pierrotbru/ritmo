@@ -24,10 +24,10 @@ pub async fn import_contents_people(src: &SqlitePool, dst: &SqlitePool) -> Resul
             format!("Failed to fetch rows for table tags: {}", e)
         ))?;
 
-    let mut table : Vec<crate::db::entity::contents_people::ActiveModel> = Vec::new();
+    let mut table : Vec<crate::db::entity::contents_people_roles::ActiveModel> = Vec::new();
 
     for row in calibre_rows {
-        let single: crate::db::entity::contents_people::ActiveModel = crate::db::entity::contents_people::ActiveModel {
+        let single: crate::db::entity::contents_people_roles::ActiveModel = crate::db::entity::contents_people_roles::ActiveModel {
             content_id: Set(row.get(0)),
             person_id: Set(row.get(1)),
             ..Default::default()
@@ -35,7 +35,7 @@ pub async fn import_contents_people(src: &SqlitePool, dst: &SqlitePool) -> Resul
         table.push(single);
     }
 
-    let _ = ContentsPeople::insert_many(table).exec(&ritmo_conn).await?;
+    let _ = ContentsPeopleRoles::insert_many(table).exec(&ritmo_conn).await?;
 
     let duration = start.elapsed();
     println!("SeaORM import contents_people: {:?}", duration);

@@ -8,7 +8,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
     #[sea_orm(column_type = "Text")]
-    pub title: String,
+    pub name: String,
     pub publisher_id: Option<i32>,
     pub format_id: Option<i32>,
     pub publication_date: Option<i64>,
@@ -20,14 +20,19 @@ pub struct Model {
     pub original_title: Option<String>,
     #[sea_orm(column_type = "Text", nullable)]
     pub notes: Option<String>,
+    pub has_cover: Option<i32>,
+    pub has_paper: Option<i32>,
+    #[sea_orm(column_type = "Text", nullable, unique)]
+    pub file_link: Option<String>,
+    pub pre_accepted: Option<i32>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(has_many = "super::books_contents::Entity")]
     BooksContents,
-    #[sea_orm(has_many = "super::books_people::Entity")]
-    BooksPeople,
+    #[sea_orm(has_many = "super::books_people_roles::Entity")]
+    BooksPeopleRoles,
     #[sea_orm(has_many = "super::books_tags::Entity")]
     BooksTags,
     #[sea_orm(
@@ -49,11 +54,19 @@ pub enum Relation {
     #[sea_orm(
         belongs_to = "super::series::Entity",
         from = "Column::SeriesId",
-        to = "super::series::Column::SeriesId",
+        to = "super::series::Column::Id",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    Series,
+    Series2,
+    #[sea_orm(
+        belongs_to = "super::series::Entity",
+        from = "Column::SeriesId",
+        to = "super::series::Column::Id",
+        on_update = "NoAction",
+        on_delete = "NoAction"
+    )]
+    Series1,
 }
 
 impl Related<super::books_contents::Entity> for Entity {
@@ -62,9 +75,9 @@ impl Related<super::books_contents::Entity> for Entity {
     }
 }
 
-impl Related<super::books_people::Entity> for Entity {
+impl Related<super::books_people_roles::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::BooksPeople.def()
+        Relation::BooksPeopleRoles.def()
     }
 }
 
@@ -86,27 +99,12 @@ impl Related<super::publishers::Entity> for Entity {
     }
 }
 
-impl Related<super::series::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Series.def()
-    }
-}
-
 impl Related<super::contents::Entity> for Entity {
     fn to() -> RelationDef {
         super::books_contents::Relation::Contents.def()
     }
     fn via() -> Option<RelationDef> {
         Some(super::books_contents::Relation::Books.def().rev())
-    }
-}
-
-impl Related<super::people::Entity> for Entity {
-    fn to() -> RelationDef {
-        super::books_people::Relation::People.def()
-    }
-    fn via() -> Option<RelationDef> {
-        Some(super::books_people::Relation::Books.def().rev())
     }
 }
 

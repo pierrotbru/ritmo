@@ -29,7 +29,7 @@ pub async fn import_tags(src: &SqlitePool, dst: &SqlitePool) -> Result<(), Ritmo
     for row in calibre_rows {
         let single: crate::db::entity::tags::ActiveModel = crate::db::entity::tags::ActiveModel {
             id: Set(row.get(0)),
-            tag_name: Set(row.get(1)),
+            name: Set(row.get(1)),
             ..Default::default()
         };
         table.push(single);

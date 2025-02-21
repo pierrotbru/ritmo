@@ -12,25 +12,16 @@ pub struct Model {
     #[sea_orm(column_type = "Text", nullable)]
     pub nationality: Option<String>,
     pub birth_date: Option<i32>,
-    pub role: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(has_many = "super::aliases::Entity")]
     Aliases,
-    #[sea_orm(has_many = "super::books_people::Entity")]
-    BooksPeople,
-    #[sea_orm(has_many = "super::contents_people::Entity")]
-    ContentsPeople,
-    #[sea_orm(
-        belongs_to = "super::roles::Entity",
-        from = "Column::Role",
-        to = "super::roles::Column::Id",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    Roles,
+    #[sea_orm(has_many = "super::books_people_roles::Entity")]
+    BooksPeopleRoles,
+    #[sea_orm(has_many = "super::contents_people_roles::Entity")]
+    ContentsPeopleRoles,
 }
 
 impl Related<super::aliases::Entity> for Entity {
@@ -39,39 +30,15 @@ impl Related<super::aliases::Entity> for Entity {
     }
 }
 
-impl Related<super::books_people::Entity> for Entity {
+impl Related<super::books_people_roles::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::BooksPeople.def()
+        Relation::BooksPeopleRoles.def()
     }
 }
 
-impl Related<super::contents_people::Entity> for Entity {
+impl Related<super::contents_people_roles::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::ContentsPeople.def()
-    }
-}
-
-impl Related<super::roles::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Roles.def()
-    }
-}
-
-impl Related<super::books::Entity> for Entity {
-    fn to() -> RelationDef {
-        super::books_people::Relation::Books.def()
-    }
-    fn via() -> Option<RelationDef> {
-        Some(super::books_people::Relation::People.def().rev())
-    }
-}
-
-impl Related<super::contents::Entity> for Entity {
-    fn to() -> RelationDef {
-        super::contents_people::Relation::Contents.def()
-    }
-    fn via() -> Option<RelationDef> {
-        Some(super::contents_people::Relation::People.def().rev())
+        Relation::ContentsPeopleRoles.def()
     }
 }
 

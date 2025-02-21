@@ -81,7 +81,7 @@ async fn seed_languages_names_table(pool: &SqlitePool) -> Result<(), RitmoErr> {
 
     for (iso_code, language_name) in languages {
         let iso_single: crate::db::entity::languages_names::ActiveModel = crate::db::entity::languages_names::ActiveModel {
-            ref_name: Set(Some(language_name.to_owned())),
+            name: Set(Some(language_name.to_owned())),
             id: Set(iso_code.to_owned()),
             ..Default::default()
         };
@@ -149,7 +149,7 @@ async fn seed_content_types(pool: &SqlitePool) -> Result<(), DbErr> {
     let mut table : Vec<crate::db::entity::contents_types::ActiveModel> = Vec::new();
     for name in types_data {
         let single: crate::db::entity::contents_types::ActiveModel = crate::db::entity::contents_types::ActiveModel {
-            type_name: Set(name.to_string()),
+            name: Set(name.to_string()),
             ..Default::default()
         };
         table.push(single);

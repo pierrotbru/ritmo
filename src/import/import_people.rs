@@ -30,7 +30,6 @@ pub async fn import_people(src: &SqlitePool, dst: &SqlitePool) -> Result<(), Rit
         let single: crate::db::entity::people::ActiveModel = crate::db::entity::people::ActiveModel {
             name: Set(row.get(1)),
             id: Set(row.get(0)),
-            role: Set(1),
             ..Default::default()
         };
         table.push(single);

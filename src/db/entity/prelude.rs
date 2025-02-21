@@ -3,12 +3,12 @@
 pub use super::aliases::Entity as Aliases;
 pub use super::books::Entity as Books;
 pub use super::books_contents::Entity as BooksContents;
-pub use super::books_people::Entity as BooksPeople;
+pub use super::books_people_roles::Entity as BooksPeopleRoles;
 pub use super::books_tags::Entity as BooksTags;
 pub use super::contents::Entity as Contents;
 pub use super::contents_current_languages::Entity as ContentsCurrentLanguages;
 pub use super::contents_original_languages::Entity as ContentsOriginalLanguages;
-pub use super::contents_people::Entity as ContentsPeople;
+pub use super::contents_people_roles::Entity as ContentsPeopleRoles;
 pub use super::contents_source_languages::Entity as ContentsSourceLanguages;
 pub use super::contents_tags::Entity as ContentsTags;
 pub use super::contents_types::Entity as ContentsTypes;

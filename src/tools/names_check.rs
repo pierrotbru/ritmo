@@ -69,7 +69,7 @@ async fn get_names_list(pool: &SqlitePool) -> Result<Vec<String>, RitmoErr> { //
     }
 }
 
-pub async fn compare_single_name(pool: &SqlitePool, target_name: String, jaro_winkler_threshold: f64, jaro_threshold: f64) -> Result<Vec<(String, String)>, RitmoErr> {
+pub async fn compare_single_name(pool: &SqlitePool, target_name: String, jaro_winkler_threshold: f64, jaro_threshold: f64) -> Result<Vec<(String, String, f64, f64)>, RitmoErr> {
 
     let names: Vec<String> = get_names_list(pool).await?;
 
@@ -77,15 +77,10 @@ pub async fn compare_single_name(pool: &SqlitePool, target_name: String, jaro_wi
     let normalized_target = normalize_name(&target_name);
     
     // Find similar names   
-    let similar_names: Vec<(String, String)> = names
+    let similar_names: Vec<(String, String, f64, f64)> = names
         .iter()
         .filter_map(|name| {
             let normalized_name = normalize_name(name);
-            
-            // Skip comparing the name with itself
-            if normalized_name == normalized_target {
-                return None;
-            }
             
             let similarity_jw = jaro_winkler(&normalized_target, &normalized_name);
             let similarity_j = jaro(&normalized_target, &normalized_name);
@@ -93,7 +88,9 @@ pub async fn compare_single_name(pool: &SqlitePool, target_name: String, jaro_wi
             if similarity_jw >= jaro_winkler_threshold && similarity_j >= jaro_threshold {
                 Some((
                     target_name.clone(), 
-                    name.clone(), 
+                    name.clone(),
+                    similarity_j.clone(),
+                    similarity_jw.clone(), 
                 ))
             } else {
                 None

@@ -40,7 +40,7 @@ enum Commands {
         path: PathBuf,
     },
     
-    /// Import data from a Calibre database
+    /// Creates a new database, then import data from a Calibre database
     Import {
         /// Source database path to import data from
         #[arg(short, long, help = "Path to the source database file", default_value = "../emalib_SSD/metadata.db")]
@@ -68,16 +68,16 @@ enum Commands {
         #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
         path: PathBuf,
     },
-
+    /// Check the names compare function, with a single name
     Check {
         /// Source database path to import data from
         #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
         path: PathBuf,
 
-        #[arg(short, long, help = "Name to compare", default_value = "Smith")]
+        #[arg(short, long, help = "Name to compare", default_value = "Asimov Isaac")]
         name: String,
     },
-
+    /// Search the books for an author
     Search {
         /// Database path
         #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
@@ -86,6 +86,12 @@ enum Commands {
         #[arg(short, long, help = "Name to compare", default_value = "a")]
         name: String,
     },
+    /// Add one book to the database
+    Add {
+        /// Database path
+        #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
+        path: PathBuf,
+    }
 }
 
 #[tokio::main] 
@@ -128,7 +134,7 @@ async fn main() -> Result<(), RitmoErr> {
         }
         Commands::Check { path, name} => {
             let conn = create_pool(&path, false).await?;
-            let names = compare_single_name(&conn, (&name).to_string(), 0.6, 0.6).await?;
+            let names = compare_single_name(&conn, (&name).to_string(), 0.7, 0.7).await?;
             for n in names {
                 println!("{:?}", n);
             }            
@@ -143,8 +149,9 @@ async fn main() -> Result<(), RitmoErr> {
 
             let book_ids = get_book_ids_by_current_language(&pool, "eng").await?;
             println!("Found {:?} books in english", book_ids.len());
-
-
+        }
+        Commands::Add {path} => {
+            let pool = create_pool(&path, false).await?;
         }
     }
     Ok(())
