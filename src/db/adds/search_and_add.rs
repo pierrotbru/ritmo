@@ -13,44 +13,192 @@ use crate::RitmoErr;
 use crate::db::entity::roles;
 
 #[async_trait::async_trait]
-trait SearchAndAdd {
+pub trait SearchAndAdd {
     async fn search_and_add(&self, pool: &SqlitePool, target: &str, add_it: bool) -> Result<i32, RitmoErr>;
 }
 
 #[async_trait::async_trait]
-impl SearchAndAdd for roles::Model {
+impl SearchAndAdd for aliases::Model {
     async fn search_and_add(&self, pool: &SqlitePool, target: &str, add_it: bool) -> Result<i32, RitmoErr> {
         let conn = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool.clone());
         
         // First, try to find an existing role
-        let existing_role = Roles::find()
-            .filter(roles::Column::Name.eq(target))
+        let existing_data = Publishers::find()
+            .filter(aliases::Column::Name.eq(target))
             .one(&conn)
             .await
             .map_err(|e| RitmoErr::DatabaseQueryFailed(e.to_string()))?;
         
-        // If role exists, return its ID
-        if let Some(role) = existing_role {
-            return Ok(role.id);
+        // If data exists, return its ID
+        if let Some(data) = existing_data {
+            return Ok(data.id);
         }
         
         // If add_it is true and no role exists, create a new role
         if add_it {
-            let new_role = roles::ActiveModel {
+            let new_data = aliases::ActiveModel {
                 name: ActiveValue::Set(target.to_string()),
                 ..Default::default()
             };
             
-            let inserted_role = new_role
+            let inserted_data = new_data
                 .insert(&conn)
                 .await
                 .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
             
-            return Ok(inserted_role.id);
+            return Ok(inserted_data.id);
         }
         
-        // If no role exists and add_it is false, return an error
-        Err(RitmoErr::NoResultsError(format!("Role '{}' not found", target)))
+        // If no data exists and add_it is false, return an error
+        Err(RitmoErr::NoResultsError(format!("Publishers '{}' not found", target)))
+    }
+}
+
+#[async_trait::async_trait]
+impl SearchAndAdd for books::Model {
+    async fn search_and_add(&self, pool: &SqlitePool, target: &str, add_it: bool) -> Result<i32, RitmoErr> {
+        let conn = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool.clone());
+        
+        // First, try to find an existing role
+        let existing_data = Publishers::find()
+            .filter(books::Column::Name.eq(target))
+            .one(&conn)
+            .await
+            .map_err(|e| RitmoErr::DatabaseQueryFailed(e.to_string()))?;
+        
+        // If data exists, return its ID
+        if let Some(data) = existing_data {
+            return Ok(data.id);
+        }
+        
+        // If add_it is true and no role exists, create a new role
+        if add_it {
+            let new_data = books::ActiveModel {
+                name: ActiveValue::Set(target.to_string()),
+                ..Default::default()
+            };
+            
+            let inserted_data = new_data
+                .insert(&conn)
+                .await
+                .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
+            
+            return Ok(inserted_data.id);
+        }
+        
+        // If no data exists and add_it is false, return an error
+        Err(RitmoErr::NoResultsError(format!("Publishers '{}' not found", target)))
+    }
+}
+
+#[async_trait::async_trait]
+impl SearchAndAdd for contents::Model {
+    async fn search_and_add(&self, pool: &SqlitePool, target: &str, add_it: bool) -> Result<i32, RitmoErr> {
+        let conn = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool.clone());
+        
+        // First, try to find an existing role
+        let existing_data = Publishers::find()
+            .filter(contents::Column::Name.eq(target))
+            .one(&conn)
+            .await
+            .map_err(|e| RitmoErr::DatabaseQueryFailed(e.to_string()))?;
+        
+        // If data exists, return its ID
+        if let Some(data) = existing_data {
+            return Ok(data.id);
+        }
+        
+        // If add_it is true and no role exists, create a new role
+        if add_it {
+            let new_data = contents::ActiveModel {
+                name: ActiveValue::Set(target.to_string()),
+                ..Default::default()
+            };
+            
+            let inserted_data = new_data
+                .insert(&conn)
+                .await
+                .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
+            
+            return Ok(inserted_data.id);
+        }
+        
+        // If no data exists and add_it is false, return an error
+        Err(RitmoErr::NoResultsError(format!("Publishers '{}' not found", target)))
+    }
+}
+
+#[async_trait::async_trait]
+impl SearchAndAdd for contents_types::Model {
+    async fn search_and_add(&self, pool: &SqlitePool, target: &str, add_it: bool) -> Result<i32, RitmoErr> {
+        let conn = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool.clone());
+        
+        // First, try to find an existing role
+        let existing_data = Publishers::find()
+            .filter(contents_types::Column::Name.eq(target))
+            .one(&conn)
+            .await
+            .map_err(|e| RitmoErr::DatabaseQueryFailed(e.to_string()))?;
+        
+        // If data exists, return its ID
+        if let Some(data) = existing_data {
+            return Ok(data.id);
+        }
+        
+        // If add_it is true and no role exists, create a new role
+        if add_it {
+            let new_data = contents_types::ActiveModel {
+                name: ActiveValue::Set(target.to_string()),
+                ..Default::default()
+            };
+            
+            let inserted_data = new_data
+                .insert(&conn)
+                .await
+                .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
+            
+            return Ok(inserted_data.id);
+        }
+        
+        // If no data exists and add_it is false, return an error
+        Err(RitmoErr::NoResultsError(format!("Publishers '{}' not found", target)))
+    }
+}
+
+#[async_trait::async_trait]
+impl SearchAndAdd for formats::Model {
+    async fn search_and_add(&self, pool: &SqlitePool, target: &str, add_it: bool) -> Result<i32, RitmoErr> {
+        let conn = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool.clone());
+        
+        // First, try to find an existing role
+        let existing_data = Publishers::find()
+            .filter(formats::Column::Name.eq(target))
+            .one(&conn)
+            .await
+            .map_err(|e| RitmoErr::DatabaseQueryFailed(e.to_string()))?;
+        
+        // If data exists, return its ID
+        if let Some(data) = existing_data {
+            return Ok(data.id);
+        }
+        
+        // If add_it is true and no role exists, create a new role
+        if add_it {
+            let new_data = formats::ActiveModel {
+                name: ActiveValue::Set(target.to_string()),
+                ..Default::default()
+            };
+            
+            let inserted_data = new_data
+                .insert(&conn)
+                .await
+                .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
+            
+            return Ok(inserted_data.id);
+        }
+        
+        // If no data exists and add_it is false, return an error
+        Err(RitmoErr::NoResultsError(format!("Publishers '{}' not found", target)))
     }
 }
 
@@ -60,34 +208,145 @@ impl SearchAndAdd for people::Model {
         let conn = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool.clone());
         
         // First, try to find an existing role
-        let existing_people = People::find()
+        let existing_data = Publishers::find()
             .filter(people::Column::Name.eq(target))
             .one(&conn)
             .await
             .map_err(|e| RitmoErr::DatabaseQueryFailed(e.to_string()))?;
         
-        // If people exists, return its ID
-        if let Some(people) = existing_people {
-            return Ok(people.id);
+        // If data exists, return its ID
+        if let Some(data) = existing_data {
+            return Ok(data.id);
         }
         
         // If add_it is true and no role exists, create a new role
         if add_it {
-            let new_people = people::ActiveModel {
+            let new_data = people::ActiveModel {
                 name: ActiveValue::Set(target.to_string()),
                 ..Default::default()
             };
             
-            let inserted_people = new_people
+            let inserted_data = new_data
                 .insert(&conn)
                 .await
                 .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
             
-            return Ok(inserted_people.id);
+            return Ok(inserted_data.id);
         }
         
-        // If no role exists and add_it is false, return an error
-        Err(RitmoErr::NoResultsError(format!("People '{}' not found", target)))
+        // If no data exists and add_it is false, return an error
+        Err(RitmoErr::NoResultsError(format!("Publishers '{}' not found", target)))
+    }
+}
+
+#[async_trait::async_trait]
+impl SearchAndAdd for publishers::Model {
+    async fn search_and_add(&self, pool: &SqlitePool, target: &str, add_it: bool) -> Result<i32, RitmoErr> {
+        let conn = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool.clone());
+        
+        // First, try to find an existing role
+        let existing_data = Publishers::find()
+            .filter(publishers::Column::Name.eq(target))
+            .one(&conn)
+            .await
+            .map_err(|e| RitmoErr::DatabaseQueryFailed(e.to_string()))?;
+        
+        // If data exists, return its ID
+        if let Some(data) = existing_data {
+            return Ok(data.id);
+        }
+        
+        // If add_it is true and no role exists, create a new role
+        if add_it {
+            let new_data = publishers::ActiveModel {
+                name: ActiveValue::Set(target.to_string()),
+                ..Default::default()
+            };
+            
+            let inserted_data = new_data
+                .insert(&conn)
+                .await
+                .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
+            
+            return Ok(inserted_data.id);
+        }
+        
+        // If no data exists and add_it is false, return an error
+        Err(RitmoErr::NoResultsError(format!("Publishers '{}' not found", target)))
+    }
+}
+
+#[async_trait::async_trait]
+impl SearchAndAdd for roles::Model {
+    async fn search_and_add(&self, pool: &SqlitePool, target: &str, add_it: bool) -> Result<i32, RitmoErr> {
+        let conn = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool.clone());
+        
+        // First, try to find an existing role
+        let existing_data = Publishers::find()
+            .filter(roles::Column::Name.eq(target))
+            .one(&conn)
+            .await
+            .map_err(|e| RitmoErr::DatabaseQueryFailed(e.to_string()))?;
+        
+        // If data exists, return its ID
+        if let Some(data) = existing_data {
+            return Ok(data.id);
+        }
+        
+        // If add_it is true and no role exists, create a new role
+        if add_it {
+            let new_data = roles::ActiveModel {
+                name: ActiveValue::Set(target.to_string()),
+                ..Default::default()
+            };
+            
+            let inserted_data = new_data
+                .insert(&conn)
+                .await
+                .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
+            
+            return Ok(inserted_data.id);
+        }
+        
+        // If no data exists and add_it is false, return an error
+        Err(RitmoErr::NoResultsError(format!("Publishers '{}' not found", target)))
+    }
+}
+
+#[async_trait::async_trait]
+impl SearchAndAdd for series::Model {
+    async fn search_and_add(&self, pool: &SqlitePool, target: &str, add_it: bool) -> Result<i32, RitmoErr> {
+        let conn = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool.clone());
+        
+        // First, try to find an existing role
+        let existing_data = Publishers::find()
+            .filter(series::Column::Name.eq(target))
+            .one(&conn)
+            .await
+            .map_err(|e| RitmoErr::DatabaseQueryFailed(e.to_string()))?;
+        
+        // If data exists, return its ID
+        if let Some(data) = existing_data {
+            return Ok(data.id);
+        }
+        
+        // If add_it is true and no role exists, create a new role
+        if add_it {
+            let new_data = series::ActiveModel {
+                name: ActiveValue::Set(target.to_string()),
+                ..Default::default()
+            };
+            
+            let inserted_data = new_data
+                .insert(&conn)
+                .await
+                .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
+            
+            return Ok(inserted_data.id);
+        }
+        
+        // If no data exists and add_it is false, return an error
+        Err(RitmoErr::NoResultsError(format!("Publishers '{}' not found", target)))
     }
 }
 
@@ -97,33 +356,33 @@ impl SearchAndAdd for tags::Model {
         let conn = SqlxSqliteConnector::from_sqlx_sqlite_pool(pool.clone());
         
         // First, try to find an existing role
-        let existing_tags = Tags::find()
+        let existing_data = Publishers::find()
             .filter(tags::Column::Name.eq(target))
             .one(&conn)
             .await
             .map_err(|e| RitmoErr::DatabaseQueryFailed(e.to_string()))?;
         
-        // If tags exists, return its ID
-        if let Some(tags) = existing_tags {
-            return Ok(tags.id);
+        // If data exists, return its ID
+        if let Some(data) = existing_data {
+            return Ok(data.id);
         }
         
         // If add_it is true and no role exists, create a new role
         if add_it {
-            let new_tags = tags::ActiveModel {
+            let new_data = tags::ActiveModel {
                 name: ActiveValue::Set(target.to_string()),
                 ..Default::default()
             };
             
-            let inserted_tags = new_tags
+            let inserted_data = new_data
                 .insert(&conn)
                 .await
                 .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
             
-            return Ok(inserted_tags.id);
+            return Ok(inserted_data.id);
         }
         
-        // If no role exists and add_it is false, return an error
-        Err(RitmoErr::NoResultsError(format!("Tags '{}' not found", target)))
+        // If no data exists and add_it is false, return an error
+        Err(RitmoErr::NoResultsError(format!("Publishers '{}' not found", target)))
     }
 }

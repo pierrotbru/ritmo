@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use thiserror::Error;
 use sqlx::Error as SqlxError;
 

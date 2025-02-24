@@ -1,6 +1,5 @@
 use crate::errors::RitmoErr;
 use sqlx::{SqlitePool, Row};
-use std::collections::HashMap;
 
 // Costante per la query di inserimento (può stare anche qui)
 const INSERT_FORMAT_QUERY: &str = "INSERT INTO Formats (format_name) VALUES (?)";

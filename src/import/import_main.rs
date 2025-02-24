@@ -10,31 +10,7 @@ use crate::import::import_contents_current_languages::import_contents_current_la
 use crate::errors::RitmoErr;
 use crate::import::*;
 
-use sqlx::{
-    Row,
-    sqlite::SqliteRow,
-    sqlite::SqlitePool,
-};
-use std::collections::HashMap;
-
-/// Represents a table import configuration
-//struct TableImportConfig {
-//    table_name: &'static str,
-//    calibre_query: &'static str,
-//    my_query: &'static str,
-//    column_types: &'static [&'static str],
-//}
-//
-/// Safely convert a row value to the desired type
-//fn get_row_value<T: sqlx::Type<sqlx::Sqlite> + for<'r> sqlx::Decode<'r, sqlx::Sqlite>>(
-//    row: &SqliteRow, 
-//    index: usize
-//) -> Result<T, RitmoErr> {
-//    row.try_get(index)
-//        .map_err(|e| RitmoErr::ImportError(
-//            format!("Failed to parse column at index {}: {}", index, e)
-//        ))
-//}
+use sqlx::sqlite::SqlitePool;
 
 /// Import data from Calibre database to the current database
 pub async fn copy_data_from_calibre_db(

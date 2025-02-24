@@ -5,8 +5,8 @@ use crate::errors::RitmoErr;
 use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use tokio;
-use tracing_subscriber;
-use tracing;
+//use tracing_subscriber;
+//use tracing;
 
 mod errors;
 mod db;
@@ -14,9 +14,7 @@ mod tools;
 mod import;
 
 use tools::names_check::{check_names, compare_single_name};
-//use db::connection::create_pool;
 use crate::import::import_main;
-//use db::do_filter::get_book_ids_by_person_name;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about)]
@@ -151,7 +149,7 @@ async fn main() -> Result<(), RitmoErr> {
             println!("Found {:?} books in english", book_ids.len());
         }
         Commands::Add {path} => {
-            let pool = create_pool(&path, false).await?;
+            let _pool = create_pool(&path, false).await?;
         }
     }
     Ok(())
