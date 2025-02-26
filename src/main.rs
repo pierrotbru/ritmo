@@ -1,19 +1,22 @@
+use crate::db::adds::add_contents::add_content;
+use crate::db::adds::add_contents::ContentData;
+use crate::db::do_filter::get_book_ids_by_current_language;
+use crate::db::do_filter::get_book_ids_by_person_name;
+use crate::db::connection::create_pool;
 use crate::errors::RitmoErr;
 use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use tokio;
-use tracing_subscriber;
-use tracing;
+//use tracing_subscriber;
+//use tracing;
 
 mod errors;
-mod ritmo_db;
+mod db;
 mod tools;
-mod cal_import;
-mod connection;
+mod import;
 
 use tools::names_check::{check_names, compare_single_name};
-use connection::connection::establish_connection;
-use ritmo_db::do_filter::get_book_ids_by_person_name;
+//use crate::import::import_main;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about)]
@@ -37,7 +40,7 @@ enum Commands {
         path: PathBuf,
     },
     
-    /// Import data from a Calibre database
+    /// Creates a new database, then import data from a Calibre database
     Import {
         /// Source database path to import data from
         #[arg(short, long, help = "Path to the source database file", default_value = "../emalib_SSD/metadata.db")]
@@ -65,69 +68,109 @@ enum Commands {
         #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
         path: PathBuf,
     },
-
+    /// Check the names compare function, with a single name
     Check {
         /// Source database path to import data from
         #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
         path: PathBuf,
 
-        #[arg(short, long, help = "Name to compare", default_value = "Smith")]
+        #[arg(short, long, help = "Name to compare", default_value = "Asimov Isaac")]
         name: String,
     },
-
+    /// Search the books for an author
     Search {
         /// Database path
         #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
         path: PathBuf,
 
-        #[arg(short, long, help = "Name to compare", default_value = "Smith")]
+        #[arg(short, long, help = "Name to compare", default_value = "a")]
         name: String,
     },
+    /// Add one book to the database
+    Add {
+        /// Database path
+        #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
+        path: PathBuf,
+    }
 }
 
 #[tokio::main] 
 async fn main() -> Result<(), RitmoErr> {
 
 //    tracing_subscriber::fmt()
-//    .with_max_level(tracing::Level::DEBUG)
-//    .with_test_writer()
-//    .init();
-
+//        .with_max_level(tracing::Level::DEBUG)
+//        .with_target(false)
+//        .with_thread_ids(true)
+//        .with_thread_names(true)
+//        .with_file(true)
+//        .with_line_number(true)
+//        .init();
+//    tracing_subscriber::fmt()
+//        .with_max_level(tracing::Level::DEBUG)
+//        .with_target(false)
+//        .with_env_filter("sqlx=debug")
+//        .init();
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::New { path } => {
-            let _conn = establish_connection(&path, true).await?;
+            let _conn = create_pool(&path, true).await?;
         },
-        Commands::Import { source, destination } => {
-            let conn_dst = establish_connection(&destination, true).await?;
-            let conn_src = establish_connection(&source, false).await?;
+      Commands::Import { source, destination } => {
+            let destination = create_pool(&destination, true).await?;
+            let source = create_pool(&source, false).await?;
+
+            let _ = import::copy_data_from_calibre_db(&source, &destination).await?;
+
         },
         Commands::List { path: _ , id: _ } => {
         }
         Commands::Names { path } => {
-            let conn = establish_connection(&path, false).await?;
+            let conn = create_pool(&path, false).await?;
             let names = check_names(&conn, 0.96, 0.93).await?;
             for n in names {
                 println!("{:?}", n);
             }            
         }
         Commands::Check { path, name} => {
-            let conn = establish_connection(&path, false).await?;
-            let names = compare_single_name(&conn, (&name).to_string(), 0.6, 0.6).await?;
+            let conn = create_pool(&path, false).await?;
+            let names = compare_single_name(&conn, (&name).to_string(), 0.7, 0.7).await?;
             for n in names {
                 println!("{:?}", n);
             }            
         }
         Commands::Search { path, name } => {
-            let conn = establish_connection(&path, false).await?;
+            let pool = create_pool(&path, false).await?;
 
-            println!("Cerco nel database {:?} i libri di {:?}", path, name );
+            println!("Searching database {:?} for {:?} books", path, name );
 
-            let names = get_book_ids_by_person_name(&conn, &name).await?;
-            for n in names {
-                println!("{:?}", n);
-            }            
+            let book_ids = get_book_ids_by_person_name(&pool, name).await?;
+            println!("Found {:?} {} books", book_ids.len(), name);
+
+            let book_ids = get_book_ids_by_current_language(&pool, "eng").await?;
+            println!("Found {:?} books in english", book_ids.len());
+        }
+        Commands::Add {path} => {
+
+            let pool = create_pool(&path, false).await?;
+
+            let content_data = ContentData {
+                name: "RACCONTO4".to_string(),
+                original_title: Some("Original title 4".to_string()),
+                publication_date: Some(1678886400),
+                notes: Some("Note aggiuntive".to_string()),
+                type_id: Some("Novel".to_string()),
+                curr_lang: Some("Italian".to_string()),
+                orig_lang: Some("English".to_string()),
+                src_lang: None,
+                people: vec![("cino lino".to_string(), "Author".to_string()), ("rino pino".to_string(), "Translator".to_string()), ("mino nino".to_string(), "Cover designer".to_string()), ("quell'altro".to_string(), "fancazzista".to_string())],
+                tags: Some("stronzata".to_string()),
+            };
+
+            match add_content(pool, &content_data).await {
+                Ok(content_id) => println!("Content added with ID: {}", content_id),
+                Err(e) => eprintln!("Error adding content: {}", e),
+            }
         }
     }
     Ok(())

@@ -1,5 +1,7 @@
+#![allow(unused)]
+
 use thiserror::Error;
-use sqlx::{Error as SqlxError};
+use sqlx::Error as SqlxError;
 
 #[derive(Error, Debug)]
 pub enum QueryBuilderError {
@@ -25,14 +27,20 @@ pub enum QueryError {
 
 #[derive(Error, Debug)]
 pub enum RitmoErr {
+    #[error("Migration failed: {0}")]
+    DatabaseMigrationFailed(String),
+    #[error("IO error: {0}")]
+    IoError(String),
+    #[error("sqlx error: {0}")]
+    SqlxError(sqlx::Error),
     #[error("Database connection failed: {0}")]
     DatabaseConnectionFailed(String),
     #[error("Database query failed: {0}")]
     DatabaseQueryFailed(String),
     #[error("Database insert failed: {0}")]
     DatabaseInsertFailed(String),
-    #[error("Database migration failed: {0}")]
-    DatabaseMigrationFailed(String),
+    #[error("Database delete failed: {0}")]
+    DatabaseDeleteFailed(String),
     #[error("Database error: {0}")]
     DatabaseError(String),
     #[error("File access failed: {0}")]
@@ -53,7 +61,7 @@ pub enum RitmoErr {
     DatabaseCreationFailed(String),
     #[error("Other error: {0}")]
     OtherError(String),
-    #[error("uery building error: {0}")]
+    #[error("Query building error: {0}")]
     QueryBuilderError(#[from] QueryBuilderError), 
     #[error("Invalid table name: {0}")]
     InvalidTableName(String),
@@ -61,17 +69,16 @@ pub enum RitmoErr {
     InvalidColumnName(String),
     #[error("Query execution error: {0}")]
     QueryError(#[from] QueryError),
+    #[error("Record not found")]
+    RecordNotFound,
+    #[error("Search and add operation failed: {0}")]
+    SearchAndAddFailed(String),
+    #[error("Transaction commit failed: {0}")]
+    TransactionCommitFailed(String),
 }
 
 impl From<SqlxError> for RitmoErr {
     fn from(err: SqlxError) -> Self {
         RitmoErr::UnknownError(err.to_string())
-    }
-}
-
-impl From<sea_orm::DbErr> for RitmoErr {
-    fn from(err: sea_orm::DbErr) -> Self {
-        // Choose an appropriate variant or create a new one
-        RitmoErr::DatabaseError(err.to_string())
     }
 }

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO contents (id, name) VALUES (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "bd6e752e9c598c6e9b22f64d9d4cfb90b77f63c70a0209b6fc972fea55f1425e"
+}

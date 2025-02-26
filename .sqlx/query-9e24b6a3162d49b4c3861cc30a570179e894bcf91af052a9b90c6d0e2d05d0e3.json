@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO Formats (name) VALUES (?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "9e24b6a3162d49b4c3861cc30a570179e894bcf91af052a9b90c6d0e2d05d0e3"
+}

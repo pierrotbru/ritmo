@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO contents_people_roles (content_id, person_id, role_id) VALUES (?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "6e5900df359dc3c241428ebf5b2e5f05ecd4cf86294a77183c096bacab7f7464"
+}

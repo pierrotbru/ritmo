@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO contents (name, original_title, publication_date, notes, type_id) VALUES (?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "899987f2481b54ff6be20bf7fdbbf71fa2229c0d74bb37d0c7a608c4862f4eb9"
+}

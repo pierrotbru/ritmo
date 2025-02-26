@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO books_contents (book_id, content_id) VALUES (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "f828341ccbc4e029c1ef9a8bba1416ab3cdf4af0b94de5e2e393e671f5f6c25c"
+}
