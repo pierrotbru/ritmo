@@ -58,7 +58,7 @@ pub async fn seed_languages_names_table(pool: &SqlitePool) -> Result<(), RitmoEr
     let mut tx = pool.begin().await.map_err(|e| RitmoErr::DatabaseConnectionFailed(e.to_string()))?;
 
     for (iso_code, language_name) in languages {
-        query!("INSERT INTO languages_names (id, name) VALUES (?, ?)", iso_code, language_name)
+        query!("INSERT INTO languages_names (iso_code, name) VALUES (?, ?)", iso_code, language_name)
             .execute(&mut *tx)
             .await
             .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;

@@ -16,15 +16,19 @@ pub async fn import_tags(src: &SqlitePool, dst: &SqlitePool) -> Result<(), Ritmo
         .await
         .map_err(|e| RitmoErr::ImportError(format!("Failed to fetch rows for table tags: {}", e)))?;
 
+    let mut tx = dst.begin().await.map_err(|e| RitmoErr::DatabaseConnectionFailed(e.to_string()))?;
+
     for row in calibre_rows {
         let id: i64 = row.get("id");
         let name: String = row.get("name");
 
         query!("INSERT INTO tags (id, name) VALUES (?, ?)", id, name)
-            .execute(dst)
+            .execute(&mut *tx)
             .await
             .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
     }
+
+    tx.commit().await.map_err(|e| RitmoErr::TransactionCommitFailed(e.to_string()))?;
 
     let duration = start.elapsed();
     println!("sqlx import tags: {:?}", duration);
