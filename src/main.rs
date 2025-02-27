@@ -160,11 +160,11 @@ async fn main() -> Result<(), RitmoErr> {
                 publication_date: Some(1678886400),
                 notes: Some("Note aggiuntive".to_string()),
                 type_id: Some("Novel".to_string()),
-                curr_lang: Some("Italian".to_string()),
-                orig_lang: Some("English".to_string()),
-                src_lang: None,
+                curr_lang: ["Italian".to_string()].to_vec(),
+                orig_lang: ["English".to_string()].to_vec(),
                 people: vec![("cino lino".to_string(), "Author".to_string()), ("rino pino".to_string(), "Translator".to_string()), ("mino nino".to_string(), "Cover designer".to_string()), ("quell'altro".to_string(), "fancazzista".to_string())],
-                tags: Some("stronzata".to_string()),
+                tags: ["stronzata".to_string(), "altra stronzata".to_string()].to_vec(),
+                ..Default::default()
             };
 
             match add_content(pool, &content_data).await {

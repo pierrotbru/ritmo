@@ -1,0 +1,24 @@
+-- Add down migration script here
+DROP TABLE IF EXISTS aliases;
+DROP TABLE IF EXISTS books;
+DROP TABLE IF EXISTS books_contents;
+DROP TABLE IF EXISTS books_people_roles;
+DROP TABLE IF EXISTS books_tags;
+DROP TABLE IF EXISTS contents;
+DROP TABLE IF EXISTS contents_current_languages;
+DROP TABLE IF EXISTS contents_original_languages;
+DROP TABLE IF EXISTS contents_people_roles;
+DROP TABLE IF EXISTS contents_source_languages;
+DROP TABLE IF EXISTS contents_tags;
+DROP TABLE IF EXISTS formats;
+DROP TABLE IF EXISTS laverdure;
+DROP TABLE IF EXISTS people;
+DROP TABLE IF EXISTS publishers;
+DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS series;
+DROP TABLE IF EXISTS tags;
+DROP TABLE IF EXISTS types;
+DROP TABLE IF EXISTS languages_names;
+DROP TABLE IF EXISTS original_languages;
+DROP TABLE IF EXISTS current_languages;
+DROP TABLE IF EXISTS source_languages;
