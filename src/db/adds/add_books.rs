@@ -117,17 +117,62 @@ pub async fn add_book(pool: SqlitePool, book: &BookData) -> Result<i32, RitmoErr
     }
 
     let result = query!(
-        "INSERT INTO books (name) VALUES (?)",
-        new_book.name,
+        "INSERT INTO books (name, publisher_id, format_id, publication_date,
+        acquisition_date, last_modified_date, series_id, series_index,
+        original_title, notes, has_cover, has_paper, file_link, pre_accepted
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        new_book.name, new_book.publisher_id, new_book.format_id, new_book.publication_date,
+        new_book.acquisition_date, new_book.last_modified_date, new_book.series_id, new_book.series_index,
+        new_book.original_title, new_book.notes, new_book.has_cover, new_book.has_paper, new_book.file_link, new_book.pre_accepted
     )
     .execute(&mut *tx)
     .await
     .map_err(|e| RitmoErr::DatabaseInsertFailed(format!("Failed to insert content: {}", e)))?;
 
-    // get the id of the last added record in the books table
     let new_book_id = result.last_insert_rowid();
 
-    // commit the transaction
+    // mancano alcune tabelle join
+    for tag in &book.tags.clone() {
+        let result = search_and_add(&mut tx, "tags", "id", "name", &tag, IdAction::AddId )
+        .await
+        .map_err(|e| RitmoErr::SearchAndAddFailed(format!("Failed to search and add tag {}: {}", tag, e)))?;
+        let tag_id = result.id.ok_or(RitmoErr::DatabaseInsertFailed("Tag not found or added".to_string()))?;
+
+        query!(
+            "INSERT INTO books_tags (book_id, tag_id) VALUES (?, ?)",
+            new_book_id,
+            tag_id
+        )
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| RitmoErr::DatabaseInsertFailed(format!("Failed to insert book tags: {}", e)))?;
+    }
+
+    for (person_name, role_name) in &book.people {
+        let person_result = search_and_add(&mut tx, "people", "id", "name", person_name, IdAction::AddId )
+        .await
+        .map_err(|e| RitmoErr::SearchAndAddFailed(format!("Failed to search and add person {}: {}", person_name, e)))?;
+
+        let person_id = person_result.id.ok_or(RitmoErr::DatabaseInsertFailed(format!("Person {} not found or added", person_name )))?;
+
+        let role_result = search_and_add( &mut tx, "roles", "id", "name", role_name, IdAction::AddId )
+        .await
+        .map_err(|e| RitmoErr::SearchAndAddFailed(format!("Failed to search and add role {}: {}", role_name, e)))?;
+
+        let role_id = role_result.id.ok_or(RitmoErr::DatabaseInsertFailed(format!("Role {} not found or added", role_name )))?;
+
+        query!(
+            "INSERT INTO books_people_roles (book_id, person_id, role_id) VALUES (?, ?, ?)",
+            new_book_id, person_id, role_id
+        )
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| {
+            RitmoErr::DatabaseInsertFailed(format!("Failed to insert into books_people_roles: {}", e))
+        })?;
+    }
+
+
     tx.commit()
       .await
       .map_err(|e| RitmoErr::TransactionCommitFailed(e.to_string()))?;
