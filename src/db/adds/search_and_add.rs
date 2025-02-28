@@ -1,6 +1,7 @@
 use sqlx::{Sqlite, Transaction, query, query_as};
 use crate::RitmoErr;
 
+#[derive(Debug)]
 pub struct NewId {
     pub id: Option<i32>,
     pub added: bool,
