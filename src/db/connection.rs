@@ -1,5 +1,4 @@
 use sqlx::query;
-use crate::db::seeding::seed_all;
 use sqlx::{sqlite::SqlitePool, migrate::Migrator, migrate};
 use std::path::PathBuf;
 use std::fs;
@@ -33,7 +32,6 @@ pub async fn create_pool(path: &PathBuf, create: bool) -> Result<SqlitePool, Rit
 
     if create {
         MIGRATOR.run(&pool).await.map_err(|e| RitmoErr::DatabaseMigrationFailed(e.to_string()))?;
-        seed_all(&pool).await?;
     }
 
     Ok(pool)
