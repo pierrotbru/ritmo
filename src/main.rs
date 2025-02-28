@@ -1,3 +1,5 @@
+use crate::db::adds::add_books::BookData;
+use crate::db::adds::add_books::add_book;
 use crate::db::adds::add_contents::add_content;
 use crate::db::adds::add_contents::ContentData;
 use crate::db::do_filter::get_book_ids_by_current_language;
@@ -86,8 +88,14 @@ enum Commands {
         #[arg(short, long, help = "Name to compare", default_value = "a")]
         name: String,
     },
+    /// Add one content to the database
+    ContentAdd {
+        /// Database path
+        #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
+        path: PathBuf,
+    },
     /// Add one book to the database
-    Add {
+    BookAdd {
         /// Database path
         #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
         path: PathBuf,
@@ -150,7 +158,7 @@ async fn main() -> Result<(), RitmoErr> {
             let book_ids = get_book_ids_by_current_language(&pool, "eng").await?;
             println!("Found {:?} books in english", book_ids.len());
         }
-        Commands::Add {path} => {
+        Commands::ContentAdd {path} => {
 
             let pool = create_pool(&path, false).await?;
 
@@ -160,7 +168,7 @@ async fn main() -> Result<(), RitmoErr> {
                 publication_date: Some(1678886400),
                 notes: Some("Note aggiuntive".to_string()),
                 type_id: Some("Novel".to_string()),
-                curr_lang: ["Italian".to_string()].to_vec(),
+                curr_lang: ["Italian".to_string(), "Croatian".to_string()].to_vec(),
                 orig_lang: ["English".to_string()].to_vec(),
                 people: vec![("cino lino".to_string(), "Author".to_string()), ("rino pino".to_string(), "Translator".to_string()), ("mino nino".to_string(), "Cover designer".to_string()), ("quell'altro".to_string(), "fancazzista".to_string())],
                 tags: ["stronzata".to_string(), "altra stronzata".to_string()].to_vec(),
@@ -170,6 +178,20 @@ async fn main() -> Result<(), RitmoErr> {
             match add_content(pool, &content_data).await {
                 Ok(content_id) => println!("Content added with ID: {}", content_id),
                 Err(e) => eprintln!("Error adding content: {}", e),
+            }
+        }
+        Commands::BookAdd {path} => {
+            let pool = create_pool(&path, false).await?;
+            let book_data = BookData {
+                name: "Libro".to_string(),
+                format: Some("EPUB".to_string()),
+                series: Some("Urania".to_string()),
+                publisher: Some("Montatori".to_string()),
+                ..Default::default()
+            };
+            match add_book(pool, &book_data).await {
+                Ok(content_id) => println!("Book added with ID: {}", content_id),
+                Err(e) => eprintln!("Error adding book: {}", e),
             }
         }
     }

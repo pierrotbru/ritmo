@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO contents_tags (content_id, tag_id) VALUES (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "04ddf9394ed12b3f7b795da28c7bdbb58fdbecdd32b9e4e50144d2a329fe5415"
+}
