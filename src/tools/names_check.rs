@@ -71,3 +71,4 @@ pub async fn compare_single_name(pool: &SqlitePool, target_name: String, jaro_wi
     Ok(similar_names)
 }
 
+

@@ -1,16 +1,213 @@
-use crate::db::adds::add_books::BookData;
-use crate::db::adds::add_books::add_book;
-use crate::db::adds::add_contents::add_content;
-use crate::db::adds::add_contents::ContentData;
-use crate::db::do_filter::get_book_ids_by_current_language;
-use crate::db::do_filter::get_book_ids_by_person_name;
+//use crate::db::adds::add_books::BookData;
+//use crate::db::adds::add_books::add_book;
+//use crate::db::adds::add_contents::add_content;
+//use crate::db::adds::add_contents::ContentData;
+//use crate::db::do_filter::get_book_ids_by_current_language;
+//use crate::db::do_filter::get_book_ids_by_person_name;
+//use crate::db::connection::create_pool;
+//use crate::errors::RitmoErr;
+//use std::path::PathBuf;
+//use clap::{Parser, Subcommand};
+//use tokio;
+////use tracing_subscriber;
+////use tracing;
+//
+//mod errors;
+//mod db;
+//mod tools;
+//mod import;
+//
+//use tools::names_check::{check_names, compare_single_name};
+////use crate::import::import_main;
+//
+//#[derive(Parser, Debug)]
+//#[clap(author, version, about, long_about)]
+//#[command(name = "ritmo")]
+//#[command(version = "0.1.0")]
+//#[command(author = "Your Name <your.email@example.com>")]
+//#[command(about = "A CLI tool for database operations")]
+//#[command(long_about = "A comprehensive database management tool for organizing and manipulating books databases")]
+//struct Cli {
+//    #[command(subcommand)]
+//    command: Commands,
+//}
+//
+//#[derive(Subcommand)]
+//#[derive(Debug)]
+//enum Commands {
+//    /// Create a new database
+//    New {
+//        /// Path where the new database will be created
+//        #[arg(short, long, help = "Output path for the new database file", default_value = "../db001")]
+//        path: PathBuf,
+//    },
+//    
+//    /// Creates a new database, then import data from a Calibre database
+//    Import {
+//        /// Source database path to import data from
+//        #[arg(short, long, help = "Path to the source database file", default_value = "../emalib_SSD/metadata.db")]
+//        source: PathBuf,
+//        
+//        /// Destination database path to import data to
+//        #[arg(short, long, help = "Path to the destination database dir", default_value = "../db001")]
+//        destination: PathBuf,
+//    },
+//
+//    /// Read the list of books from a database
+//    List {
+//        /// Source database path to import data from
+//        #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
+//        path: PathBuf,
+//
+//        /// number of book to list
+//        #[arg(short, long, help = "Id number of book to read", default_value = "1")]
+//        id: i64,
+//    },
+//
+//    /// Shows couples of most resembling names, to check for typing errors or incomplete names
+//    Names {
+//        /// Source database path to import data from
+//        #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
+//        path: PathBuf,
+//    },
+//    /// Check the names compare function, with a single name
+//    Check {
+//        /// Source database path to import data from
+//        #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
+//        path: PathBuf,
+//
+//        #[arg(short, long, help = "Name to compare", default_value = "Asimov Isaac")]
+//        name: String,
+//    },
+//    /// Search the books for an author
+//    Search {
+//        /// Database path
+//        #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
+//        path: PathBuf,
+//
+//        #[arg(short, long, help = "Name to compare", default_value = "a")]
+//        name: String,
+//    },
+//    /// Add one content to the database
+//    ContentAdd {
+//        /// Database path
+//        #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
+//        path: PathBuf,
+//    },
+//    /// Add one book to the database
+//    BookAdd {
+//        /// Database path
+//        #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
+//        path: PathBuf,
+//    }
+//}
+//
+//#[tokio::main] 
+//async fn main() -> Result<(), RitmoErr> {
+//
+////    tracing_subscriber::fmt()
+////        .with_max_level(tracing::Level::DEBUG)
+////        .with_target(false)
+////        .with_thread_ids(true)
+////        .with_thread_names(true)
+////        .with_file(true)
+////        .with_line_number(true)
+////        .init();
+////    tracing_subscriber::fmt()
+////        .with_max_level(tracing::Level::DEBUG)
+////        .with_target(false)
+////        .with_env_filter("sqlx=debug")
+////        .init();
+//    let cli = Cli::parse();
+//
+//    match &cli.command {
+//        Commands::New { path } => {
+//            let _conn = create_pool(&path, true).await?;
+//        },
+//      Commands::Import { source, destination } => {
+//            let destination = create_pool(&destination, true).await?;
+//            let source = create_pool(&source, false).await?;
+//
+//            let _ = import::copy_data_from_calibre_db(&source, &destination).await?;
+//
+//        },
+//        Commands::List { path: _ , id: _ } => {
+//        }
+//        Commands::Names { path } => {
+//            let conn = create_pool(&path, false).await?;
+//            let names = check_names(&conn, 0.96, 0.93).await?;
+//            for n in names {
+//                println!("{:?}", n);
+//            }            
+//        }
+//        Commands::Check { path, name} => {
+//            let conn = create_pool(&path, false).await?;
+//            let names = compare_single_name(&conn, (&name).to_string(), 0.7, 0.7).await?;
+//            for n in names {
+//                println!("{:?}", n);
+//            }            
+//        }
+//        Commands::Search { path, name } => {
+//            let pool = create_pool(&path, false).await?;
+//
+//            println!("Searching database {:?} for {:?} books", path, name );
+//
+//            let book_ids = get_book_ids_by_person_name(&pool, name).await?;
+//            println!("Found {:?} {} books", book_ids.len(), name);
+//
+//            let book_ids = get_book_ids_by_current_language(&pool, "eng").await?;
+//            println!("Found {:?} books in english", book_ids.len());
+//        }
+//        Commands::ContentAdd {path} => {
+//
+//            let pool = create_pool(&path, false).await?;
+//
+//            let content_data = ContentData {
+//                name: "RACCONTO4".to_string(),
+//                original_title: Some("Original title 4".to_string()),
+//                publication_date: Some(1678886400),
+//                notes: Some("Note aggiuntive".to_string()),
+//                type_id: Some("Novel".to_string()),
+//                curr_lang: ["Italian".to_string(), "Croatian".to_string()].to_vec(),
+//                orig_lang: ["English".to_string()].to_vec(),
+//                people: vec![("cino lino".to_string(), "Author".to_string()), ("rino pino".to_string(), "Translator".to_string()), ("mino nino".to_string(), "Cover designer".to_string()), ("quell'altro".to_string(), "fancazzista".to_string())],
+//                tags: ["stronzata".to_string(), "altra stronzata".to_string()].to_vec(),
+//                ..Default::default()
+//            };
+//
+//            match add_content(pool, &content_data).await {
+//                Ok(content_id) => println!("Content added with ID: {}", content_id),
+//                Err(e) => eprintln!("Error adding content: {}", e),
+//            }
+//        }
+//        Commands::BookAdd {path} => {
+//            let pool = create_pool(&path, false).await?;
+//            let book_data = BookData {
+//                name: "Libro".to_string(),
+//                format: Some("EPUB".to_string()),
+//                series: Some("Urania".to_string()),
+//                publisher: Some("Montatori".to_string()),
+//                ..Default::default()
+//            };
+//            match add_book(pool, &book_data).await {
+//                Ok(content_id) => println!("Book added with ID: {}", content_id),
+//                Err(e) => eprintln!("Error adding book: {}", e),
+//            }
+//        }
+//    }
+//    Ok(())
+//}    
+//
+
+
+use crate::db::adds::add_books::{add_book, BookData};
+use crate::db::adds::add_contents::{add_content, ContentData};
+use crate::db::do_filter::{get_book_ids_by_current_language, get_book_ids_by_person_name};
 use crate::db::connection::create_pool;
 use crate::errors::RitmoErr;
 use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use tokio;
-//use tracing_subscriber;
-//use tracing;
 
 mod errors;
 mod db;
@@ -18,7 +215,6 @@ mod tools;
 mod import;
 
 use tools::names_check::{check_names, compare_single_name};
-//use crate::import::import_main;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about)]
@@ -32,155 +228,109 @@ struct Cli {
     command: Commands,
 }
 
-#[derive(Subcommand)]
-#[derive(Debug)]
+#[derive(Subcommand, Debug)]
 enum Commands {
-    /// Create a new database
     New {
-        /// Path where the new database will be created
         #[arg(short, long, help = "Output path for the new database file", default_value = "../db001")]
         path: PathBuf,
     },
-    
-    /// Creates a new database, then import data from a Calibre database
     Import {
-        /// Source database path to import data from
         #[arg(short, long, help = "Path to the source database file", default_value = "../emalib_SSD/metadata.db")]
         source: PathBuf,
-        
-        /// Destination database path to import data to
         #[arg(short, long, help = "Path to the destination database dir", default_value = "../db001")]
         destination: PathBuf,
     },
-
-    /// Read the list of books from a database
     List {
-        /// Source database path to import data from
         #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
         path: PathBuf,
-
-        /// number of book to list
         #[arg(short, long, help = "Id number of book to read", default_value = "1")]
         id: i64,
     },
-
-    /// Shows couples of most resembling names, to check for typing errors or incomplete names
     Names {
-        /// Source database path to import data from
         #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
         path: PathBuf,
     },
-    /// Check the names compare function, with a single name
     Check {
-        /// Source database path to import data from
         #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
         path: PathBuf,
-
         #[arg(short, long, help = "Name to compare", default_value = "Asimov Isaac")]
         name: String,
     },
-    /// Search the books for an author
     Search {
-        /// Database path
         #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
         path: PathBuf,
-
         #[arg(short, long, help = "Name to compare", default_value = "a")]
         name: String,
     },
-    /// Add one content to the database
     ContentAdd {
-        /// Database path
         #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
         path: PathBuf,
     },
-    /// Add one book to the database
     BookAdd {
-        /// Database path
         #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
         path: PathBuf,
-    }
+    },
 }
 
-#[tokio::main] 
+#[tokio::main]
 async fn main() -> Result<(), RitmoErr> {
-
-//    tracing_subscriber::fmt()
-//        .with_max_level(tracing::Level::DEBUG)
-//        .with_target(false)
-//        .with_thread_ids(true)
-//        .with_thread_names(true)
-//        .with_file(true)
-//        .with_line_number(true)
-//        .init();
-//    tracing_subscriber::fmt()
-//        .with_max_level(tracing::Level::DEBUG)
-//        .with_target(false)
-//        .with_env_filter("sqlx=debug")
-//        .init();
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::New { path } => {
-            let _conn = create_pool(&path, true).await?;
+            create_pool(&path, true).await?;
         },
-      Commands::Import { source, destination } => {
-            let destination = create_pool(&destination, true).await?;
-            let source = create_pool(&source, false).await?;
-
-            let _ = import::copy_data_from_calibre_db(&source, &destination).await?;
-
+        Commands::Import { source, destination } => {
+            let destination_pool = create_pool(&destination, true).await?;
+            let source_pool = create_pool(&source, false).await?;
+            import::copy_data_from_calibre_db(&source_pool, &destination_pool).await?;
         },
-        Commands::List { path: _ , id: _ } => {
-        }
+        Commands::List { path, id } => {
+            // Implementation for listing books can be added here
+        },
         Commands::Names { path } => {
             let conn = create_pool(&path, false).await?;
             let names = check_names(&conn, 0.96, 0.93).await?;
-            for n in names {
-                println!("{:?}", n);
-            }            
-        }
-        Commands::Check { path, name} => {
+            names.iter().for_each(|n| println!("{:?}", n));
+        },
+        Commands::Check { path, name } => {
             let conn = create_pool(&path, false).await?;
-            let names = compare_single_name(&conn, (&name).to_string(), 0.7, 0.7).await?;
-            for n in names {
-                println!("{:?}", n);
-            }            
-        }
+            let names = compare_single_name(&conn, name.clone(), 0.7, 0.7).await?;
+            names.iter().for_each(|n| println!("{:?}", n));
+        },
         Commands::Search { path, name } => {
             let pool = create_pool(&path, false).await?;
-
-            println!("Searching database {:?} for {:?} books", path, name );
-
+            println!("Searching database {:?} for {:?} books", path, name);
             let book_ids = get_book_ids_by_person_name(&pool, name).await?;
             println!("Found {:?} {} books", book_ids.len(), name);
-
-            let book_ids = get_book_ids_by_current_language(&pool, "eng").await?;
-            println!("Found {:?} books in english", book_ids.len());
-        }
-        Commands::ContentAdd {path} => {
-
+            let english_books = get_book_ids_by_current_language(&pool, "eng").await?;
+            println!("Found {:?} books in English", english_books.len());
+        },
+        Commands::ContentAdd { path } => {
             let pool = create_pool(&path, false).await?;
-
             let content_data = ContentData {
                 name: "RACCONTO4".to_string(),
                 original_title: Some("Original title 4".to_string()),
                 publication_date: Some(1678886400),
-                notes: Some("Note aggiuntive".to_string()),
+                notes: Some("Additional notes".to_string()),
                 type_id: Some("Novel".to_string()),
-                curr_lang: ["Italian".to_string(), "Croatian".to_string()].to_vec(),
-                orig_lang: ["English".to_string()].to_vec(),
-                people: vec![("cino lino".to_string(), "Author".to_string()), ("rino pino".to_string(), "Translator".to_string()), ("mino nino".to_string(), "Cover designer".to_string()), ("quell'altro".to_string(), "fancazzista".to_string())],
-                tags: ["stronzata".to_string(), "altra stronzata".to_string()].to_vec(),
+                curr_lang: vec!["Italian".to_string(), "Croatian".to_string()],
+                orig_lang: vec!["English".to_string()],
+                people: vec![
+                    ("cino lino".to_string(), "Author".to_string()),
+                    ("rino pino".to_string(), "Translator".to_string()),
+                    ("mino nino".to_string(), "Cover designer".to_string()),
+                    ("quell'altro".to_string(), "fancazzista".to_string()),
+                ],
+                tags: vec!["stronzata".to_string(), "altra stronzata".to_string()],
                 ..Default::default()
             };
-
             match add_content(pool, &content_data).await {
                 Ok(content_id) => println!("Content added with ID: {}", content_id),
                 Err(e) => eprintln!("Error adding content: {}", e),
             }
-        }
-        Commands::BookAdd {path} => {
+        },
+        Commands::BookAdd { path } => {
             let pool = create_pool(&path, false).await?;
             let book_data = BookData {
                 name: "Libro".to_string(),
@@ -193,7 +343,7 @@ async fn main() -> Result<(), RitmoErr> {
                 Ok(content_id) => println!("Book added with ID: {}", content_id),
                 Err(e) => eprintln!("Error adding book: {}", e),
             }
-        }
+        },
     }
     Ok(())
-}    
+}
