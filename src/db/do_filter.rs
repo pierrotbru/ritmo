@@ -86,20 +86,3 @@ pub struct Node {
     table_name: String,
     col_name: String
 }
-
-pub async fn create_tree(pool: &Pool<Sqlite>, point0: Node , target: Node) -> Result<Vec<Node>, RitmoErr> {
-
-    let tree = Vec::<Node>::new();
-
-    let rows = sqlx::query("SELECT name FROM sqlite_master WHERE type='table'")
-        .fetch_all(pool)
-        .await?;
-
-    let mut table_names = Vec::new();
-    for row in rows {
-        let table_name: String = row.try_get("name")?;
-        table_names.push(table_name);
-    }
-
-    Ok(tree)
-}
