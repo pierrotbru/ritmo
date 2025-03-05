@@ -10,9 +10,7 @@ pub struct ContentData {
     pub publication_date: Option<i64>,
     pub notes: Option<String>,
     pub type_id: Option<String>,
-    pub src_lang: Vec<String>,
-    pub curr_lang: Vec<String>,
-    pub orig_lang: Vec<String>,
+    pub lang: Vec<(String,i32)>,
     pub people: Vec<(String, String)>,
     pub tags: Vec<String>,
 }

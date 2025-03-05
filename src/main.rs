@@ -115,8 +115,7 @@ async fn main() -> Result<(), RitmoErr> {
                 publication_date: Some(1678886400),
                 notes: Some("Additional notes".to_string()),
                 type_id: Some("Novel".to_string()),
-                curr_lang: vec!["Italian".to_string(), "Croatian".to_string()],
-                orig_lang: vec!["English".to_string()],
+                lang: vec![("Italian".to_string(),1), ("Croatian".to_string(),1)],
                 people: vec![
                     ("cino lino".to_string(), "Author".to_string()),
                     ("rino pino".to_string(), "Translator".to_string()),

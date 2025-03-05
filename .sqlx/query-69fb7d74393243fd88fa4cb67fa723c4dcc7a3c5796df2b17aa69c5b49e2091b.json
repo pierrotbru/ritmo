@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE running_languages SET role = ? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "69fb7d74393243fd88fa4cb67fa723c4dcc7a3c5796df2b17aa69c5b49e2091b"
+}
