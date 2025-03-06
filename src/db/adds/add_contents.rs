@@ -76,7 +76,7 @@ pub async fn add_content(pool: SqlitePool, content: &ContentData) -> Result<i32,
     let new_content_id = result.last_insert_rowid();
 
     println!("add_languages");
-    let _ = add_languages(&mut tx, &content, new_content_id).await?;
+    let _ = add_languages(&mut tx, content.lang.clone(), new_content_id).await?;
 
     for tag in &content.tags {
         let tag_result = search_and_add(

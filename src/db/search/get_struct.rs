@@ -1,4 +1,4 @@
-use sqlx::{ sqlite::SqlitePoolOptions, 
+use sqlx::{ sqlite::SqlitePoolOptions,
             Row,
             migrate,
             migrate::Migrator,
@@ -9,11 +9,11 @@ use crate::errors::RitmoErr;
 
 static MIGRATOR: Migrator = migrate!();
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct TableInfo {
     pub name: String,
     pub column_info: Vec<(String, String)>,
-    pub foreign_keys: Vec<(Vec<String>, String, Vec<String>)>
+    pub foreign_keys: Vec<(Vec<String>, String, Vec<String>)>,
 }
 
 async fn extract_table_names(pool: &Pool<Sqlite>) -> Result<Vec<String>, RitmoErr> {
@@ -79,13 +79,13 @@ async fn create_database_in_memory(create: bool) -> Result<Pool<Sqlite>, RitmoEr
 }
 
 pub async fn get_struct_table() -> Result<Vec<TableInfo>, RitmoErr> {
-    let pool = create_database_in_memory(true).await.unwrap(); // Assumi che la funzione di creazione del database esista
+    let pool = create_database_in_memory(true).await.unwrap();
 
     let mut tables = Vec::<TableInfo>::new();
 
     let table_names = extract_table_names(&pool).await?;
     for table_name in table_names {
-        let mut table = TableInfo::default(); 
+        let mut table = TableInfo::default();
         table.name = table_name.clone();
         table.column_info = extract_column_info(&pool, &table_name).await?;
         table.foreign_keys = extract_foreign_keys(&pool, &table_name).await?;

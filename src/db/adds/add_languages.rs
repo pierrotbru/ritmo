@@ -29,13 +29,20 @@ pub async fn get_language_code_by_name(
 
 pub async fn add_languages(
     tx: &mut Transaction<'_, Sqlite>,
-    new_content: &ContentData,
+    lang: Vec<(String, i32)>,
     new_content_id: i64,
 ) -> Result<(), RitmoErr> {
 
-    for (iso_code, id_role) in &new_content.lang {
+    for (iso_code, id_role) in lang {
 
-        let code = get_language_code_by_name(tx, &iso_code).await?;
+        let mut code = String::new();
+        if iso_code.len() != 3 {
+            code = get_language_code_by_name(tx, &iso_code).await?;
+            println!("ahia");
+        }
+        else {
+            code = iso_code;
+        }
         let code_id = search_and_add(tx, "running_languages", "id", "iso_code", &code, IdAction::AddId)
             .await
             .map_err(|e| RitmoErr::SearchAndAddFailed(format!("Failed to search and add {}: {}", code, e)))?;

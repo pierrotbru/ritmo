@@ -1,3 +1,4 @@
+use crate::db::adds::add_languages::add_languages;
 use sqlx::{sqlite::SqlitePool, query, Row};
 use crate::RitmoErr;
 use std::time::Instant;
@@ -22,6 +23,8 @@ struct BookContent {
 }
 
 pub async fn import_books(src: &SqlitePool, dst: &SqlitePool) -> Result<(), RitmoErr> {
+
+    let mut tx = dst.begin().await?;
     let start = Instant::now();
 
     let foreign_keys_enabled: (i32,) = sqlx::query_as("PRAGMA foreign_keys")
@@ -39,25 +42,46 @@ pub async fn import_books(src: &SqlitePool, dst: &SqlitePool) -> Result<(), Ritm
         .await
         .map_err(|e| RitmoErr::ImportError(format!("Failed to fetch rows for table books: {}", e)))?;
 
+
     for row in &calibre_rows {
         let id: i64 = row.get("id");
         let name: String = row.get("title");
 
-//        query!("INSERT INTO books (id, name, series_id) VALUES (?, ?, ?)", id, name, Option::<i64>::None)
-//            .execute(dst)
-//            .await
-//            .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
-
-        query!("INSERT INTO contents (id, name) VALUES (?, ?)", id, name)
-            .execute(dst)
+        let iso_code = sqlx::query("SELECT l.lang_code FROM books_languages_link bll JOIN languages l ON bll.lang_code = l.id WHERE bll.book = ?")
+            .bind(id) // Associa l'ID del libro al parametro della query
+            .fetch_all(src) // Esegue la query e recupera tutte le righe
             .await
             .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
 
+        let result: Result<Vec<(String, i32)>, RitmoErr> = iso_code
+            .iter()
+            .map(|row| {
+                let iso_code: String = row
+                    .try_get("lang_code")
+                    .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
+                let role_id: i32 = 3_i32;
+                Ok((iso_code.trim().to_string(), role_id))
+            })
+            .collect();
+
+        query!("INSERT INTO books (id, name) VALUES (?, ?)", id, name)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
+
+        query!("INSERT INTO contents (id, name) VALUES (?, ?)", id, name)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
+
+        let _ = add_languages(&mut tx, result.unwrap(), id).await;
+
         query!("INSERT INTO books_contents (book_id, content_id) VALUES (?, ?)", id, id)
-            .execute(dst)
+            .execute(&mut *tx)
             .await
             .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
     }
+    tx.commit().await?;
 
     let duration = start.elapsed();
     println!("sqlx import books: {:?}", duration);

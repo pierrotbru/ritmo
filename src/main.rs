@@ -146,7 +146,7 @@ async fn main() -> Result<(), RitmoErr> {
         },
         Commands::Test {} => {
             println!("Test");
-            let _ = query_build().await;
+            let _ = query_build("books".to_string()).await;
             println!("Done");
         },
 
