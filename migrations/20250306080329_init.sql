@@ -1,6 +1,152 @@
+CREATE TABLE IF NOT EXISTS "aliases" (
+	"id"	INTEGER NOT NULL,
+	"name"	TEXT NOT NULL,
+	"person_id"	INTEGER NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT),
+	FOREIGN KEY("person_id") REFERENCES "people"("id")
+);
+CREATE TABLE IF NOT EXISTS "books_contents" (
+	"book_id"	INTEGER NOT NULL,
+	"content_id"	INTEGER NOT NULL,
+	PRIMARY KEY("book_id","content_id"),
+	FOREIGN KEY("book_id") REFERENCES "books"("id"),
+	FOREIGN KEY("content_id") REFERENCES "contents"("id")
+);
+CREATE TABLE IF NOT EXISTS "books_people_roles" (
+	"book_id"	INTEGER NOT NULL,
+	"person_id"	INTEGER NOT NULL,
+	"role_id"	INTEGER NOT NULL,
+	PRIMARY KEY("book_id","person_id","role_id"),
+	FOREIGN KEY("book_id") REFERENCES "books"("id"),
+	FOREIGN KEY("role_id") REFERENCES "roles"("id"),
+	FOREIGN KEY("person_id") REFERENCES "people"("id")
+);
+CREATE TABLE IF NOT EXISTS "books_tags" (
+	"book_id"	INTEGER NOT NULL,
+	"tag_id"	INTEGER NOT NULL,
+	PRIMARY KEY("book_id","tag_id"),
+	FOREIGN KEY("tag_id") REFERENCES "tags"("id"),
+	FOREIGN KEY("book_id") REFERENCES "books"("id")
+);
+CREATE TABLE IF NOT EXISTS "contents" (
+	"id"	INTEGER NOT NULL,
+	"name"	TEXT NOT NULL,
+	"original_title"	TEXT,
+	"publication_date"	BIGINT,
+	"notes"	TEXT,
+	"type_id"	INTEGER,
+	"pre_accepted"	INTEGER DEFAULT (1),
+	FOREIGN KEY("type_id") REFERENCES "types"("id"),
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "contents_people_roles" (
+	"content_id"	INTEGER NOT NULL,
+	"person_id"	INTEGER NOT NULL,
+	"role_id"	INTEGER NOT NULL,
+	FOREIGN KEY("role_id") REFERENCES "roles"("id"),
+	FOREIGN KEY("content_id") REFERENCES "contents"("id"),
+	FOREIGN KEY("person_id") REFERENCES "people"("id"),
+	PRIMARY KEY("content_id","person_id","role_id")
+);
+CREATE TABLE IF NOT EXISTS "contents_tags" (
+	"content_id"	INTEGER NOT NULL,
+	"tag_id"	INTEGER NOT NULL,
+	FOREIGN KEY("content_id") REFERENCES "contents"("id"),
+	FOREIGN KEY("tag_id") REFERENCES "tags"("id"),
+	PRIMARY KEY("content_id","tag_id")
+);
+CREATE TABLE IF NOT EXISTS "formats" (
+	"id"	INTEGER NOT NULL,
+	"name"	TEXT NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "laverdure" (
+	"key"	TEXT NOT NULL,
+	"value"	TEXT,
+	PRIMARY KEY("key")
+);
+CREATE TABLE IF NOT EXISTS "people" (
+	"id"	INTEGER NOT NULL UNIQUE,
+	"name"	TEXT NOT NULL,
+	"nationality"	TEXT,
+	"birth_date"	INTEGER,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "publishers" (
+	"id"	INTEGER NOT NULL,
+	"name"	TEXT NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "roles" (
+	"id"	INTEGER NOT NULL,
+	"name"	TEXT NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "series" (
+	"id"	INTEGER NOT NULL,
+	"name"	TEXT NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "tags" (
+	"id"	INTEGER NOT NULL,
+	"name"	TEXT NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "types" (
+	"id"	INTEGER NOT NULL,
+	"name"	TEXT NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "languages_names" (
+	"id"	INTEGER,
+	"iso_code"	TEXT NOT NULL UNIQUE,
+	"name"	TEXT NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "books" (
+	"id"	INTEGER NOT NULL,
+	"name"	TEXT NOT NULL,
+	"publisher_id"	INTEGER,
+	"format_id"	INTEGER,
+	"publication_date"	BIGINT,
+	"acquisition_date"	BIGINT,
+	"last_modified_date"	BIGINT,
+	"series_id"	INTEGER,
+	"series_index"	INTEGER,
+	"original_title"	TEXT,
+	"notes"	TEXT,
+	"has_cover"	INTEGER,
+	"has_paper"	INTEGER,
+	"file_link"	TEXT UNIQUE,
+	"pre_accepted"	INTEGER DEFAULT (1),
+	FOREIGN KEY("publisher_id") REFERENCES "publishers"("id"),
+	FOREIGN KEY("format_id") REFERENCES "formats"("id"),
+	FOREIGN KEY("series_id") REFERENCES "series"("id"),
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "languages_roles" (
+	"id"	INTEGER,
+	"name"	TEXT NOT NULL UNIQUE,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "running_languages" (
+	"id"	INTEGER,
+	"iso_code"	TEXT,
+	"role"	INTEGER,
+	FOREIGN KEY("role") REFERENCES "languages_roles"("id"),
+	FOREIGN KEY("iso_code") REFERENCES "languages_names"("iso_code"),
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "contents_languages" (
+	"contents_id"	INTEGER,
+	"languages_id"	INTEGER,
+	FOREIGN KEY("contents_id") REFERENCES "contents"("id"),
+	FOREIGN KEY("languages_id") REFERENCES "running_languages"("id"),
+	PRIMARY KEY("contents_id","languages_id")
+);
 INSERT INTO "laverdure" VALUES ('author','laverdure');
 INSERT INTO "laverdure" VALUES ('program','ritmo');
-INSERT INTO "laverdure" VALUES ('program release','0.0.0');
+INSERT INTO "laverdure" VALUES ('program_release','0.0.0');
 INSERT INTO "laverdure" VALUES ('database_version','0.0.0');
 INSERT INTO "roles" VALUES (1,'Author');
 INSERT INTO "roles" VALUES (2,'Translator');
@@ -512,3 +658,82 @@ INSERT INTO "languages_names" VALUES (484,'zul','Zulu');
 INSERT INTO "languages_names" VALUES (485,'zun','Zuni');
 INSERT INTO "languages_names" VALUES (486,'zxx','No linguistic content; Not applicable');
 INSERT INTO "languages_names" VALUES (487,'zza','Zaza; Dimili; Dimli; Kirdki; Kirmanjki; Zazaki');
+INSERT INTO "languages_roles" VALUES (1,'source');
+INSERT INTO "languages_roles" VALUES (2,'original');
+INSERT INTO "languages_roles" VALUES (3,'current');
+CREATE INDEX IF NOT EXISTS "idx_books_contents_junction" ON "books_contents" (
+	"book_id",
+	"content_id"
+);
+CREATE INDEX IF NOT EXISTS "idx_books_people_lookup" ON "books_people_roles" (
+	"book_id",
+	"person_id"
+);
+CREATE INDEX IF NOT EXISTS "idx_books_tags_lookup" ON "books_tags" (
+	"book_id",
+	"tag_id"
+);
+CREATE INDEX IF NOT EXISTS "idx_contents_core_search" ON "contents" (
+	"name",
+	"type_id",
+	"publication_date"
+);
+CREATE INDEX IF NOT EXISTS "idx_contents_metadata" ON "contents" (
+	"type_id"
+);
+CREATE INDEX IF NOT EXISTS "idx_contents_people_lookup" ON "contents_people_roles" (
+	"content_id",
+	"person_id"
+);
+CREATE INDEX IF NOT EXISTS "idx_contents_tags_lookup" ON "contents_tags" (
+	"content_id",
+	"tag_id"
+);
+CREATE INDEX IF NOT EXISTS "idx_contents_temporal" ON "contents" (
+	"publication_date"
+);
+CREATE INDEX IF NOT EXISTS "idx_contents_type_date" ON "contents" (
+	"type_id",
+	"publication_date"
+);
+CREATE INDEX IF NOT EXISTS "idx_people_search" ON "people" (
+	"name",
+	"id"
+);
+CREATE INDEX IF NOT EXISTS "idx_publishers_search" ON "publishers" (
+	"name",
+	"id"
+);
+CREATE INDEX IF NOT EXISTS "idx_roles_search" ON "roles" (
+	"name"
+);
+CREATE INDEX IF NOT EXISTS "idx_series_search" ON "series" (
+	"name"
+);
+CREATE INDEX IF NOT EXISTS "idx_tags_search" ON "tags" (
+	"name"
+);
+CREATE INDEX IF NOT EXISTS "idx_v_contents_details" ON "contents" (
+	"id",
+	"type_id",
+	"publication_date"
+);
+CREATE INDEX IF NOT EXISTS "idx_books_core_search" ON "books" (
+	"name",
+	"series_id",
+	"publication_date"
+);
+CREATE INDEX IF NOT EXISTS "idx_books_metadata" ON "books" (
+	"publisher_id",
+	"format_id",
+	"series_id"
+);
+CREATE INDEX IF NOT EXISTS "idx_books_series_index" ON "books" (
+	"series_id",
+	"series_index"
+);
+CREATE INDEX IF NOT EXISTS "idx_books_temporal" ON "books" (
+	"publication_date",
+	"acquisition_date",
+	"last_modified_date"
+);

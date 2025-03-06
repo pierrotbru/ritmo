@@ -1,4 +1,0 @@
-TRUNCATE TABLE laverdure;
-TRUNCATE TABLE roles;
-TRUNCATE TABLE types;
-TRUNCATE TABLE languages_names;

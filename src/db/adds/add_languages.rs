@@ -42,7 +42,7 @@ pub async fn add_languages(
         let query = query!("UPDATE running_languages SET role = ? WHERE id = ?", id_role, code_id.id);
         query.execute(&mut **tx)
             .await
-            .map_err(|e| RitmoErr::DatabaseInsertFailed(format!("Failed to insert into running_languages: {}", e)))?;
+            .map_err(|e| RitmoErr::DatabaseInsertFailed(format!("Failed to update running_languages: {}", e)))?;
 
         let query = query!("INSERT INTO contents_languages (contents_id, languages_id) VALUES (?, ?)",new_content_id, code_id.id);
         query.execute(&mut **tx)
