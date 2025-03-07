@@ -1204,5 +1204,88 @@ CREATE VIEW IF NOT EXISTS ContentsWithDetails AS
            LEFT JOIN
            types t ON c.type_id = t.id;
 
+CREATE VIEW ContentsFullDetails AS
+SELECT
+    c.id AS content_id,
+    c.name AS content_name,
+    c.original_title,
+    c.publication_date,
+    c.notes AS content_notes,
+    t.name AS type_name,
+    c.pre_accepted AS content_pre_accepted,
+    p.id AS person_id,
+    p.name AS person_name,
+    r.name AS role_name,
+    tag.name AS tag_name,
+    ln.name AS language_name,
+    lr.name AS language_role
+FROM
+    contents c
+LEFT JOIN
+    types t ON c.type_id = t.id
+LEFT JOIN
+    contents_people_roles cpr ON c.id = cpr.content_id
+LEFT JOIN
+    people p ON cpr.person_id = p.id
+LEFT JOIN
+    roles r ON cpr.role_id = r.id
+LEFT JOIN
+    contents_tags ct ON c.id = ct.content_id
+LEFT JOIN
+    tags tag ON ct.tag_id = tag.id
+LEFT JOIN
+    contents_languages cl ON c.id = cl.contents_id
+LEFT JOIN
+    running_languages rl ON cl.languages_id = rl.id
+LEFT JOIN
+    languages_names ln ON rl.iso_code = ln.iso_code
+LEFT JOIN
+    languages_roles lr ON rl.role = lr.id;
+
+CREATE VIEW BooksFullDetails AS
+SELECT
+    b.id AS book_id,
+    b.name AS book_name,
+    p.name AS publisher_name,
+    f.name AS format_name,
+    b.publication_date,
+    b.acquisition_date,
+    b.last_modified_date,
+    s.name AS series_name,
+    b.series_index,
+    b.original_title,
+    b.notes AS book_notes,
+    b.has_cover,
+    b.has_paper,
+    b.file_link,
+    b.pre_accepted AS book_pre_accepted,
+    pers.id AS person_id,
+    pers.name AS person_name,
+    r.name AS role_name,
+    tag.name AS tag_name,
+    c.id AS content_id,
+    c.name AS content_name
+FROM
+    books b
+LEFT JOIN
+    publishers p ON b.publisher_id = p.id
+LEFT JOIN
+    formats f ON b.format_id = f.id
+LEFT JOIN
+    series s ON b.series_id = s.id
+LEFT JOIN
+    books_people_roles bpr ON b.id = bpr.book_id
+LEFT JOIN
+    people pers ON bpr.person_id = pers.id
+LEFT JOIN
+    roles r ON bpr.role_id = r.id
+LEFT JOIN
+    books_tags bt ON b.id = bt.book_id
+LEFT JOIN
+    tags tag ON bt.tag_id = tag.id
+LEFT JOIN
+    books_contents bc ON b.id = bc.book_id
+LEFT JOIN
+    contents c ON bc.content_id = c.id;
 
 PRAGMA foreign_keys = on;

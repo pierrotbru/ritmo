@@ -1,4 +1,6 @@
-use crate::db::search::query_build::query_build;
+use crate::db::search::query_build::BookSearchCriteria;
+use crate::db::search::query_build::search_books;
+use crate::db::search::query_build::build_query;
 use crate::db::adds::add_books::{add_book, BookData};
 use crate::db::adds::add_contents::{add_content, ContentData};
 use crate::db::do_filter::{get_book_ids_by_current_language, get_book_ids_by_person_name};
@@ -70,6 +72,8 @@ enum Commands {
         path: PathBuf,
     },
     Test {
+        #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
+        path: PathBuf,
     },
 }
 
@@ -144,10 +148,14 @@ async fn main() -> Result<(), RitmoErr> {
                 Err(e) => eprintln!("Error adding book: {}", e),
             }
         },
-        Commands::Test {} => {
-            println!("Test");
-            let _ = query_build("books".to_string()).await;
-            println!("Done");
+        Commands::Test { path } => {
+            let pool = create_pool(&path, false).await?;
+            let criteria = BookSearchCriteria {
+                person_name_content: Some("Isaac Asimov".to_string()),
+                ..Default::default()
+            };
+            let n = search_books(&pool, &criteria).await?;
+            println!("found {:?} books", n);
         },
 
     }
