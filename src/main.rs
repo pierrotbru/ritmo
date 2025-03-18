@@ -1,8 +1,9 @@
+use crate::db::books::*;
+use crate::db::contents::*;
 use crate::db::search::query_build::BookSearchCriteria;
 use crate::db::search::query_build::search_books;
-use crate::db::search::query_build::build_query;
-use crate::db::adds::add_books::{add_book, BookData};
-use crate::db::adds::add_contents::{add_content, ContentData};
+// use crate::db::adds::add_books::{add_book, BookUserData};
+// use crate::db::adds::add_contents::{add_content, UserData};
 use crate::db::do_filter::{get_book_ids_by_current_language, get_book_ids_by_person_name};
 use crate::db::connection::create_pool;
 use crate::errors::RitmoErr;
@@ -113,40 +114,80 @@ async fn main() -> Result<(), RitmoErr> {
         },
         Commands::ContentAdd { path } => {
             let pool = create_pool(&path, false).await?;
-            let content_data = ContentData {
-                name: "RACCONTO4".to_string(),
-                original_title: Some("Original title 4".to_string()),
-                publication_date: Some(1678886400),
-                notes: Some("Additional notes".to_string()),
-                type_id: Some("Novel".to_string()),
-                lang: vec![("Italian".to_string(),1), ("Croatian".to_string(),1)],
-                people: vec![
-                    ("cino lino".to_string(), "Author".to_string()),
-                    ("rino pino".to_string(), "Translator".to_string()),
-                    ("mino nino".to_string(), "Cover designer".to_string()),
-                    ("quell'altro".to_string(), "fancazzista".to_string()),
-                ],
-                tags: vec!["stronzata".to_string(), "altra stronzata".to_string()],
+            let mut content = Content {
+                data: ContentUserData {
+                    name: "RACCONTO2".to_string(),
+                    original_title: Some("Original title 2".to_string()),
+                    publication_date: Some(1678886402),
+                    notes: Some("Additional notes 2".to_string()),
+                    type_id: Some("Novel".to_string()),
+                    lang: vec![("Italian".to_string(),1), ("Russian".to_string(),1)],
+                    people: vec![
+                        ("unknown".to_string(), "Author".to_string()),
+                    ],
+                    tags: vec!["boh".to_string()],
+                    to_book: 1,
+                    ..Default::default()
+                }, 
                 ..Default::default()
             };
-            match add_content(pool, &content_data).await {
-                Ok(content_id) => println!("Content added with ID: {}", content_id),
-                Err(e) => eprintln!("Error adding content: {}", e),
-            }
+            let _new_content_id = content.add_content(pool).await?;
         },
         Commands::BookAdd { path } => {
             let pool = create_pool(&path, false).await?;
-            let book_data = BookData {
-                name: "Libro".to_string(),
-                format: Some("EPUB".to_string()),
-                series: Some("Urania".to_string()),
-                publisher: Some("Montatori".to_string()),
+
+
+            let mut new_book = Book {
+                data: BookUserData {
+                    name: "Libro".to_string(),
+                    format: Some("EPUB".to_string()),
+                    series: Some("Urania".to_string()),
+                    publisher: Some("Montatori".to_string()),
+                    ..Default::default()
+                }, 
                 ..Default::default()
             };
-            match add_book(pool, &book_data).await {
-                Ok(content_id) => println!("Book added with ID: {}", content_id),
-                Err(e) => eprintln!("Error adding book: {}", e),
-            }
+            let content = Content {
+                data: ContentUserData {
+                    name: "RACCONTO4".to_string(),
+                    original_title: Some("Original title 4".to_string()),
+                    publication_date: Some(1678886400),
+                    notes: Some("Additional notes".to_string()),
+                    type_id: Some("Novel".to_string()),
+                    lang: vec![("Italian".to_string(),1), ("Croatian".to_string(),1)],
+                    people: vec![
+                        ("cino lino".to_string(), "Author".to_string()),
+                        ("rino pino".to_string(), "Translator".to_string()),
+                        ("mino nino".to_string(), "Cover designer".to_string()),
+                        ("quell'altro".to_string(), "fancazzista".to_string()),
+                    ],
+                    tags: vec!["stronzata".to_string(), "altra stronzata".to_string()],
+                    ..Default::default()
+                }, 
+                ..Default::default()
+            };
+            new_book.data.contents.push(content);
+            
+            let content = Content {
+                data: ContentUserData {
+                    name: "RACCONTO3".to_string(),
+                    original_title: Some("Original title 3".to_string()),
+                    publication_date: Some(1678886401),
+                    notes: Some("Additional notes 3".to_string()),
+                    type_id: Some("Novel".to_string()),
+                    lang: vec![("Italian".to_string(),1), ("Swedish".to_string(),1)],
+                    people: vec![
+                        ("rino gino".to_string(), "Author".to_string()),
+                        ("quell'altro".to_string(), "fancazzista".to_string()),
+                    ],
+                    tags: vec!["doppia stronzata".to_string(), "altra stronzata".to_string()],
+                    ..Default::default()
+                }, 
+                ..Default::default()
+            };
+            new_book.data.contents.push(content);
+
+            let new_book_id = new_book.add_book(pool).await?;
         },
         Commands::Test { path } => {
             let pool = create_pool(&path, false).await?;

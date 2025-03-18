@@ -1,6 +1,6 @@
 use sqlx::query;
 use crate::db::adds::search_and_add::{search_and_add, IdAction};
-use crate::ContentData;
+use crate::db::contents::*;
 use crate::RitmoErr;
 use sqlx::{query_as, Sqlite, Transaction};
 
@@ -29,7 +29,7 @@ pub async fn get_language_code_by_name(
 
 pub async fn add_languages(
     tx: &mut Transaction<'_, Sqlite>,
-    lang: Vec<(String, i32)>,
+    lang: Vec<(String, i64)>,
     new_content_id: i64,
 ) -> Result<(), RitmoErr> {
 

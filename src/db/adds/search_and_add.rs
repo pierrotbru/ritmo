@@ -3,7 +3,7 @@ use crate::RitmoErr;
 
 #[derive(Debug)]
 pub struct NewId {
-    pub id: Option<i32>,
+    pub id: Option<i64>,
     pub added: bool,
 }
 
@@ -15,7 +15,7 @@ pub enum IdAction {
 
 #[derive(sqlx::FromRow)]
 struct GenericId {
-    id: i32,
+    id: i64,
 }
 
 pub async fn search_and_add(
@@ -48,7 +48,7 @@ pub async fn search_and_add(
                     .await
                     .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
 
-                let inserted_id = result.last_insert_rowid() as i32;
+                let inserted_id = result.last_insert_rowid();
                 Ok(NewId { id: Some(inserted_id), added: true })
             }
         }

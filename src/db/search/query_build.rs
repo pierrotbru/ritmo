@@ -35,7 +35,7 @@ pub struct BookSearchCriteria {
     pub language_role: Option<String>,
 }
 
-pub async fn search_books(pool: &SqlitePool, criteria: &BookSearchCriteria) -> Result<Vec<i32>, RitmoErr> {
+pub async fn search_books(pool: &SqlitePool, criteria: &BookSearchCriteria) -> Result<Vec<i64>, RitmoErr> {
     let (query_str, params) = build_query(criteria);
     let mut query = query(&query_str);
 
@@ -50,7 +50,7 @@ pub async fn search_books(pool: &SqlitePool, criteria: &BookSearchCriteria) -> R
 
     let rows = query.fetch_all(pool).await?;
 
-    let ids: Result<Vec<i32>, sqlx::Error> = rows.iter()
+    let ids: Result<Vec<i64>, sqlx::Error> = rows.iter()
         .map(|row| row.try_get(0))
         .collect();
 

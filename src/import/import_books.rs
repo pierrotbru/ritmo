@@ -53,13 +53,13 @@ pub async fn import_books(src: &SqlitePool, dst: &SqlitePool) -> Result<(), Ritm
             .await
             .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
 
-        let result: Result<Vec<(String, i32)>, RitmoErr> = iso_code
+        let result: Result<Vec<(String, i64)>, RitmoErr> = iso_code
             .iter()
             .map(|row| {
                 let iso_code: String = row
                     .try_get("lang_code")
                     .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
-                let role_id: i32 = 3_i32;
+                let role_id: i64 = 3;
                 Ok((iso_code.trim().to_string(), role_id))
             })
             .collect();

@@ -3,5 +3,7 @@ pub mod connection;
 pub mod do_filter;
 pub mod adds;
 pub mod search;
+pub mod contents;
+pub mod books;
 
 
