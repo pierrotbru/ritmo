@@ -2,9 +2,6 @@ use crate::db::books::*;
 use crate::db::contents::*;
 use crate::db::search::query_build::BookSearchCriteria;
 use crate::db::search::query_build::search_books;
-// use crate::db::adds::add_books::{add_book, BookUserData};
-// use crate::db::adds::add_contents::{add_content, UserData};
-use crate::db::do_filter::{get_book_ids_by_current_language, get_book_ids_by_person_name};
 use crate::db::connection::create_pool;
 use crate::errors::RitmoErr;
 use std::path::PathBuf;
@@ -104,13 +101,7 @@ async fn main() -> Result<(), RitmoErr> {
             let names = compare_single_name(&conn, name.clone(), 0.7, 0.7).await?;
             names.iter().for_each(|n| println!("{:?}", n));
         },
-        Commands::Search { path, name } => {
-            let pool = create_pool(&path, false).await?;
-            println!("Searching database {:?} for {:?} books", path, name);
-            let book_ids = get_book_ids_by_person_name(&pool, name).await?;
-            println!("Found {:?} {} books", book_ids.len(), name);
-            let english_books = get_book_ids_by_current_language(&pool, "eng").await?;
-            println!("Found {:?} books in English", english_books.len());
+        Commands::Search { path: _, name: _ } => {
         },
         Commands::ContentAdd { path } => {
             let pool = create_pool(&path, false).await?;
@@ -121,7 +112,7 @@ async fn main() -> Result<(), RitmoErr> {
                     publication_date: Some(1678886402),
                     notes: Some("Additional notes 2".to_string()),
                     type_id: Some("Novel".to_string()),
-                    lang: vec![("Italian".to_string(),1), ("Russian".to_string(),1)],
+                    lang: vec![("Italian".to_string(),"current".to_string()), ("Russian".to_string(),"original".to_string())],
                     people: vec![
                         ("unknown".to_string(), "Author".to_string()),
                     ],
@@ -154,7 +145,7 @@ async fn main() -> Result<(), RitmoErr> {
                     publication_date: Some(1678886400),
                     notes: Some("Additional notes".to_string()),
                     type_id: Some("Novel".to_string()),
-                    lang: vec![("Italian".to_string(),1), ("Croatian".to_string(),1)],
+                    lang: vec![("Italian".to_string(),"current".to_string()), ("Croatian".to_string(),"original".to_string())],
                     people: vec![
                         ("cino lino".to_string(), "Author".to_string()),
                         ("rino pino".to_string(), "Translator".to_string()),
@@ -175,7 +166,7 @@ async fn main() -> Result<(), RitmoErr> {
                     publication_date: Some(1678886401),
                     notes: Some("Additional notes 3".to_string()),
                     type_id: Some("Novel".to_string()),
-                    lang: vec![("Italian".to_string(),1), ("Swedish".to_string(),1)],
+                    lang: vec![("Italian".to_string(),"current".to_string()), ("Swedish".to_string(),"original".to_string())],
                     people: vec![
                         ("rino gino".to_string(), "Author".to_string()),
                         ("quell'altro".to_string(), "fancazzista".to_string()),

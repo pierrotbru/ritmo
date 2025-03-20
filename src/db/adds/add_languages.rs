@@ -1,6 +1,5 @@
 use sqlx::query;
 use crate::db::adds::search_and_add::{search_and_add, IdAction};
-use crate::db::contents::*;
 use crate::RitmoErr;
 use sqlx::{query_as, Sqlite, Transaction};
 
@@ -29,20 +28,21 @@ pub async fn get_language_code_by_name(
 
 pub async fn add_languages(
     tx: &mut Transaction<'_, Sqlite>,
-    lang: Vec<(String, i64)>,
+    lang: Vec<(String, String)>,
     new_content_id: i64,
 ) -> Result<(), RitmoErr> {
 
-    for (iso_code, id_role) in lang {
+    for (iso_code, lang_role) in lang {
 
-        let mut code = String::new();
-        if iso_code.len() != 3 {
-            code = get_language_code_by_name(tx, &iso_code).await?;
-            println!("ahia");
-        }
-        else {
-            code = iso_code;
-        }
+        let code = if iso_code.len() != 3 {
+            get_language_code_by_name(tx, &iso_code).await?
+        } else {
+            iso_code
+        };
+
+        let id_role = search_and_add(tx, "languages_roles", "id", "name", &lang_role, IdAction::AddId)
+            .await
+            .map_err(|e| RitmoErr::SearchAndAddFailed(format!("Failed to search and add {}: {}", lang_role, e)))?;
         let code_id = search_and_add(tx, "running_languages", "id", "iso_code", &code, IdAction::AddId)
             .await
             .map_err(|e| RitmoErr::SearchAndAddFailed(format!("Failed to search and add {}: {}", code, e)))?;

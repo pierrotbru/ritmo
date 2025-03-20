@@ -73,6 +73,8 @@ pub enum RitmoErr {
     RecordNotFound,
     #[error("Search and add operation failed: {0}")]
     SearchAndAddFailed(String),
+    #[error("Search and add invalid input: {0}")]
+    InvalidInput(String),
     #[error("Transaction commit failed: {0}")]
     TransactionCommitFailed(String),
 }

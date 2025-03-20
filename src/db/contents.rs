@@ -16,7 +16,7 @@ pub struct ContentUserData {
     pub publication_date: Option<i64>,
     pub notes: Option<String>,
     pub type_id: Option<String>,
-    pub lang: Vec<(String, i64)>,
+    pub lang: Vec<(String, String)>,
     pub people: Vec<(String, String)>,
     pub tags: Vec<String>,
     pub to_book: i64
@@ -88,6 +88,7 @@ impl Content {
         self.new.id = new_content_id.try_into().unwrap();
 
         println!("add_languages");
+        println!("{:?}", self.data);
         let _ = add_languages(&mut tx, self.data.lang.clone(), new_content_id).await?;
 
         for tag in &self.data.tags {
