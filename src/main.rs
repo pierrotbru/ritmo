@@ -1,9 +1,9 @@
+use crate::import::import_people_test::import_people_test;
 use crate::db::books::*;
 use crate::db::contents::*;
-use crate::db::search::query_build::BookSearchCriteria;
-use crate::db::search::query_build::search_books;
 use crate::db::connection::create_pool;
 use crate::errors::RitmoErr;
+use crate::tools::names_check::{check_names, compare_single_name};
 use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use tokio;
@@ -13,65 +13,209 @@ mod db;
 mod tools;
 mod import;
 
-use tools::names_check::{check_names, compare_single_name};
 
-#[derive(Parser, Debug)]
-#[clap(author, version, about, long_about)]
+
+/// Gestore database per libreria digitale
+/// 
+/// Questo strumento ti permette di gestire database di libri digitali,
+/// incluse operazioni di import, ricerca, e gestione contenuti.
+#[derive(Parser)]
 #[command(name = "ritmo")]
 #[command(version = "0.1.0")]
 #[command(author = "Emanuele Ciarrocchi")]
-#[command(about = "A CLI tool for database operations")]
-#[command(long_about = "A comprehensive database management tool for organizing and manipulating books databases")]
+#[command(author, version, about, long_about = None)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
 }
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand)]
 enum Commands {
+    /// Crea un nuovo database vuoto
+    /// 
+    /// Inizializza una nuova struttura di database nella directory specificata.
+    /// Se la directory non esiste, verrà creata automaticamente.
     New {
-        #[arg(short, long, help = "Output path for the new database file", default_value = "../db001")]
+        /// Percorso di destinazione per il nuovo database
+        /// 
+        /// Specifica il percorso dove creare il nuovo database.
+        /// Se la directory non esiste, verrà creata automaticamente.
+        #[arg(short, long, default_value = "../db001")]
         path: PathBuf,
+        
+        /// Forza la creazione sovrascrivendo file esistenti
+        #[arg(long)]
+        force: bool,
     },
+    
+    /// Importa dati da un database esistente
+    /// 
+    /// Copia e converte i dati da un database sorgente verso una nuova
+    /// destinazione, mantenendo l'integrità dei dati originali.
     Import {
-        #[arg(short, long, help = "Path to the source database file", default_value = "../emalib_SSD/metadata.db")]
+        /// Percorso del database sorgente da importare
+        /// 
+        /// Specifica il file database SQLite sorgente da cui importare i dati.
+        /// Il file deve essere un database SQLite valido.
+        #[arg(short, long, default_value = "../emalib_SSD/metadata.db")]
         source: PathBuf,
-        #[arg(short, long, help = "Path to the destination database dir", default_value = "../db001")]
+        
+        /// Directory di destinazione per l'import
+        /// 
+        /// Directory dove salvare il database importato.
+        /// Se non esiste, verrà creata automaticamente.
+        #[arg(short, long, default_value = "../db001")]
         destination: PathBuf,
+        
+        /// Modalità verbosa per vedere i dettagli dell'import
+        #[arg(long)]
+        verbose: bool,
     },
+    
+    /// Elenca e visualizza informazioni sui libri
+    /// 
+    /// Mostra i dettagli di uno o più libri nel database,
+    /// inclusi metadati e informazioni di archiviazione.
     List {
-        #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
+        /// Percorso del database da consultare
+        #[arg(short, long, default_value = "../db001")]
         path: PathBuf,
-        #[arg(short, long, help = "Id number of book to read", default_value = "1")]
+        
+        /// ID specifico del libro da visualizzare
+        /// 
+        /// Specifica l'ID numerico del libro di cui visualizzare i dettagli.
+        /// Usa 0 per elencare tutti i libri disponibili.
+        #[arg(short, long, default_value_t = 1)]
         id: i64,
+        
+        /// Mostra informazioni dettagliate aggiuntive
+        #[arg(long)]
+        detailed: bool,
     },
+    
+    /// Elenca tutti gli autori presenti nel database
+    /// 
+    /// Visualizza un elenco completo di tutti gli autori catalogati,
+    /// con statistiche opzionali sui loro libri.
     Names {
-        #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
+        /// Percorso del database da consultare
+        #[arg(short, long, default_value = "../db001")]
         path: PathBuf,
+        
+        /// Mostra il conteggio dei libri per ogni autore
+        #[arg(long)]
+        count: bool,
+        
+        /// Ordina i risultati alfabeticamente
+        #[arg(long)]
+        sort: bool,
     },
+    
+    /// Verifica e confronta nomi di autori
+    /// 
+    /// Cerca corrispondenze e varianti di un nome autore nel database,
+    /// utile per identificare duplicati o variazioni nella scrittura.
     Check {
-        #[arg(short, long, help = "Path to the source database file", default_value = "../db001")]
+        /// Percorso del database da consultare
+        #[arg(short, long, default_value = "../db001")]
         path: PathBuf,
-        #[arg(short, long, help = "Name to compare", default_value = "Asimov Isaac")]
+        
+        /// Nome dell'autore da verificare
+        /// 
+        /// Nome completo dell'autore da cercare nel database.
+        /// Il confronto è case-insensitive e supporta ricerche parziali.
+        #[arg(short, long, default_value = "Asimov Isaac")]
         name: String,
+        
+        /// Ricerca fuzzy per trovare nomi simili
+        #[arg(long)]
+        fuzzy: bool,
     },
+    
+    /// Ricerca libri per titolo, autore o contenuto
+    /// 
+    /// Esegue ricerche full-text nel database per trovare libri
+    /// che corrispondono ai criteri specificati.
     Search {
-        #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
+        /// Percorso del database da consultare
+        #[arg(short, long, default_value = "../db001")]
         path: PathBuf,
-        #[arg(short, long, help = "Name to compare", default_value = "a")]
-        name: String,
+        
+        /// Termine di ricerca
+        /// 
+        /// Termine da cercare in titoli, autori e contenuti.
+        /// Supporta ricerche parziali e operatori booleani.
+        #[arg(short, long, default_value = "a")]
+        query: String,
+        
+        /// Limita il numero di risultati mostrati
+        #[arg(long, default_value_t = 10)]
+        limit: usize,
+        
+        /// Cerca solo nei titoli
+        #[arg(long)]
+        title_only: bool,
+        
+        /// Cerca solo negli autori
+        #[arg(long)]
+        author_only: bool,
     },
+    
+    /// Aggiungi contenuto testuale a libri esistenti
+    /// 
+    /// Importa e associa contenuto testuale (OCR, estratti, etc.)
+    /// a libri già presenti nel database.
     ContentAdd {
-        #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
+        /// Percorso del database da modificare
+        #[arg(short, long, default_value = "../db001")]
         path: PathBuf,
+        
+        /// Percorso del file di contenuto da aggiungere
+        #[arg(long)]
+        content_file: Option<PathBuf>,
+        
+        /// ID del libro a cui associare il contenuto
+        #[arg(long)]
+        book_id: Option<i64>,
     },
+    
+    /// Aggiungi un nuovo libro al database
+    /// 
+    /// Registra un nuovo libro nel database con i suoi metadati,
+    /// creando tutte le associazioni necessarie.
     BookAdd {
-        #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
+        /// Percorso del database da modificare
+        #[arg(short, long, default_value = "../db001")]
         path: PathBuf,
+        
+        /// Titolo del libro
+        #[arg(long)]
+        title: Option<String>,
+        
+        /// Autore del libro
+        #[arg(long)]
+        author: Option<String>,
+        
+        /// Percorso del file del libro
+        #[arg(long)]
+        file_path: Option<PathBuf>,
+        
+        /// Modalità interattiva per inserire i dati
+        #[arg(long)]
+        interactive: bool,
     },
+    
+    /// Esegui test di integrità del database
+    /// 
+    /// Verifica la consistenza e l'integrità dei dati nel database,
+    /// identificando eventuali problemi o corruzioni.
     Test {
-        #[arg(short, long, help = "Path to the database file", default_value = "../db001")]
-        path: PathBuf,
+        #[arg(short, long, default_value = "../emalib_SSD/metadata.db")]
+        source: PathBuf,
+        
+        #[arg(short, long, default_value = "../db001")]
+        destination: PathBuf,
+    
     },
 }
 
@@ -80,30 +224,30 @@ async fn main() -> Result<(), RitmoErr> {
     let cli = Cli::parse();
 
     match &cli.command {
-        Commands::New { path } => {
+        Commands::New { path, force: _ } => {
             create_pool(&path, true).await?;
         },
-        Commands::Import { source, destination } => {
+        Commands::Import { source, destination, .. } => {
             let destination_pool = create_pool(&destination, true).await?;
             let source_pool = create_pool(&source, false).await?;
             import::copy_data_from_calibre_db(&source_pool, &destination_pool).await?;
         },
-        Commands::List { path: _, id: _ } => {
+        Commands::List { path: _, id: _, .. } => {
             // Implementation for listing books can be added here
         },
-        Commands::Names { path } => {
+        Commands::Names { path, .. } => {
             let conn = create_pool(&path, false).await?;
             let names = check_names(&conn, 0.96, 0.93).await?;
             names.iter().for_each(|n| println!("{:?}", n));
         },
-        Commands::Check { path, name } => {
+        Commands::Check { path, name, .. } => {
             let conn = create_pool(&path, false).await?;
             let names = compare_single_name(&conn, name.clone(), 0.7, 0.7).await?;
             names.iter().for_each(|n| println!("{:?}", n));
         },
-        Commands::Search { path: _, name: _ } => {
+        Commands::Search { path: _, .. } => {
         },
-        Commands::ContentAdd { path } => {
+        Commands::ContentAdd { path, .. } => {
             let pool = create_pool(&path, false).await?;
             let mut content = Content {
                 data: ContentUserData {
@@ -124,7 +268,7 @@ async fn main() -> Result<(), RitmoErr> {
             };
             let _new_content_id = content.add_content(pool).await?;
         },
-        Commands::BookAdd { path } => {
+        Commands::BookAdd { path, .. } => {
             let pool = create_pool(&path, false).await?;
 
 
@@ -178,18 +322,15 @@ async fn main() -> Result<(), RitmoErr> {
             };
             new_book.data.contents.push(content);
 
-            let new_book_id = new_book.add_book(pool).await?;
+            let _new_book_id = new_book.add_book(pool).await?;
         },
-        Commands::Test { path } => {
-            let pool = create_pool(&path, false).await?;
-            let criteria = BookSearchCriteria {
-                person_name_content: Some("Isaac Asimov".to_string()),
-                ..Default::default()
-            };
-            let n = search_books(&pool, &criteria).await?;
-            println!("found {:?} books", n);
+        Commands::Test { source, destination } => {
+            let destination_pool = create_pool(&destination, false).await?;
+            let source_pool = create_pool(&source, false).await?;
+            import_people_test(&source_pool, &destination_pool).await?;
         },
 
     }
     Ok(())
 }
+

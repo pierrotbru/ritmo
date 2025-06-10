@@ -43,6 +43,8 @@ pub enum RitmoErr {
     DatabaseDeleteFailed(String),
     #[error("Database error: {0}")]
     DatabaseError(String),
+    #[error("DB Transaction failed: {0}")]
+    DatabaseTransactionError(String),
     #[error("File access failed: {0}")]
     FileAccessError(#[from] std::io::Error),
     #[error("No result found: {0}")]
@@ -77,6 +79,11 @@ pub enum RitmoErr {
     InvalidInput(String),
     #[error("Transaction commit failed: {0}")]
     TransactionCommitFailed(String),
+    #[error("Name parsing error: {0}")]
+    NameParsingError(String),
+    #[error("Name merging error: {0}")]
+    MergeError(String),
+
 }
 
 impl From<SqlxError> for RitmoErr {
@@ -84,3 +91,4 @@ impl From<SqlxError> for RitmoErr {
         RitmoErr::UnknownError(err.to_string())
     }
 }
+
