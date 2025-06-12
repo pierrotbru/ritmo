@@ -2,17 +2,17 @@ use crate::RitmoErr;
 use sqlx::{sqlite::SqlitePool, query, Row};
 use std::time::Instant;
 
-#[derive(sqlx::FromRow, Debug)]
-struct Book {
-    id: i64,
-    publisher_id: Option<i64>,
-}
-
-#[derive(sqlx::FromRow, Debug)]
-struct Publisher {
-    id: i64,
-    name: String,
-}
+//#[derive(sqlx::FromRow, Debug)]
+//struct Book {
+//    id: i64,
+//    publisher_id: Option<i64>,
+//}
+//
+//#[derive(sqlx::FromRow, Debug)]
+//struct Publisher {
+//    id: i64,
+//    name: String,
+//}
 
 pub async fn sync_publishers(calibre_conn: &SqlitePool, my_conn: &SqlitePool) -> Result<(), RitmoErr> {
     let start = Instant::now();
@@ -22,7 +22,7 @@ pub async fn sync_publishers(calibre_conn: &SqlitePool, my_conn: &SqlitePool) ->
         .map_err(|e| RitmoErr::ImportError(format!("Failed to fetch publisher links from Calibre: {}", e)))?;
 
     let duration = start.elapsed();
-    println!("fetch editors: {:?}", duration);
+    dbg!(duration);
 
     let start = Instant::now();
     let mut tx = my_conn.begin().await.map_err(|e| RitmoErr::DatabaseConnectionFailed(e.to_string()))?;
@@ -39,7 +39,7 @@ pub async fn sync_publishers(calibre_conn: &SqlitePool, my_conn: &SqlitePool) ->
 
     tx.commit().await.map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
     let duration = start.elapsed();
-    println!("update books: {:?}", duration);
+    dbg!(duration);
 
     Ok(())
 }
@@ -65,6 +65,6 @@ pub async fn import_publishers(src: &SqlitePool, dst: &SqlitePool) -> Result<(),
     tx.commit().await.map_err(|e| RitmoErr::TransactionCommitFailed(e.to_string()))?;
 
     let duration = start.elapsed();
-    println!("sqlx import publishers: {:?}", duration);
+    dbg!(duration);
     Ok(())
 }

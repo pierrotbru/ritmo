@@ -5,6 +5,7 @@ use crate::RitmoErr;
 use sqlx::{Encode, Type, Sqlite, Database, encode::IsNull};
 use sqlx::sqlite::SqliteArgumentValue;
 
+#[allow(dead_code)]
 pub enum IdAction {
     SearchId,
     AddId,
@@ -16,6 +17,7 @@ struct GenericId {
     id: i64,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
 pub struct NewId {
     pub id: Option<i64>,

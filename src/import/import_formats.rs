@@ -1,17 +1,17 @@
 use sqlx::{sqlite::SqlitePool, query, Row};
 use crate::errors::RitmoErr;
 
-#[derive(sqlx::FromRow, Debug)]
-struct Format {
-    id: i64,
-    name: String,
-}
-
-#[derive(sqlx::FromRow, Debug)]
-struct Book {
-    id: i64,
-    format_id: Option<i64>,
-}
+//#[derive(sqlx::FromRow, Debug)]
+//struct Format {
+//    id: i64,
+//    name: String,
+//}
+//
+//#[derive(sqlx::FromRow, Debug)]
+//struct Book {
+//    id: i64,
+//    format_id: Option<i64>,
+//}
 
 pub async fn sync_formats(calibre_conn: &SqlitePool, my_conn: &SqlitePool) -> Result<(), RitmoErr> {
     let books_formats = sqlx::query("SELECT b.id AS book_id, d.format AS format_name FROM books b INNER JOIN data d ON b.id = d.book")

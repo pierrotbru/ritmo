@@ -87,8 +87,7 @@ impl Content {
         let new_content_id = result.last_insert_rowid();
         self.new.id = new_content_id.try_into().unwrap();
 
-        println!("add_languages");
-        println!("{:?}", self.data);
+        dbg!(&self.data);
         let _ = add_languages(&mut tx, self.data.lang.clone(), new_content_id).await?;
 
         for tag in &self.data.tags {

@@ -3,11 +3,11 @@ use crate::RitmoErr;
 use sqlx::{sqlite::SqlitePool, query};
 use std::time::Instant;
 
-#[derive(sqlx::FromRow, Debug)]
-struct Person {
-    id: i64,
-    name: String,
-}
+//#[derive(sqlx::FromRow, Debug)]
+//struct Person {
+//    id: i64,
+//    name: String,
+//}
 
 pub async fn import_people(src: &SqlitePool, dst: &SqlitePool) -> Result<(), RitmoErr> {
     let start = Instant::now();
@@ -23,7 +23,7 @@ pub async fn import_people(src: &SqlitePool, dst: &SqlitePool) -> Result<(), Rit
         let id: i64 = row.get("id");
         let name: String = row.get("name");
 
-        query!("INSERT INTO People (id, name) VALUES (?, ?)", id, name)
+        query!("INSERT INTO people_backup (id, name) VALUES (?, ?)", id, name)
             .execute(&mut *tx)
             .await
             .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
@@ -32,6 +32,6 @@ pub async fn import_people(src: &SqlitePool, dst: &SqlitePool) -> Result<(), Rit
     tx.commit().await.map_err(|e| RitmoErr::TransactionCommitFailed(e.to_string()))?;
 
     let duration = start.elapsed();
-    println!("sqlx import people: {:?}", duration);
+    dbg!(duration);
     Ok(())
 }

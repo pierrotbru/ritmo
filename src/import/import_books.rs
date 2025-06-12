@@ -3,24 +3,24 @@ use sqlx::{sqlite::SqlitePool, query, Row};
 use crate::RitmoErr;
 use std::time::Instant;
 
-#[derive(sqlx::FromRow, Debug)]
-struct Book {
-    id: i64,
-    name: String,
-    series_id: Option<i64>,
-}
-
-#[derive(sqlx::FromRow, Debug)]
-struct Content {
-    id: i64,
-    name: String,
-}
-
-#[derive(sqlx::FromRow, Debug)]
-struct BookContent {
-    book_id: i64,
-    content_id: i64,
-}
+//#[derive(sqlx::FromRow, Debug)]
+//struct Book {
+//    id: i64,
+//    name: String,
+//    series_id: Option<i64>,
+//}
+//
+//#[derive(sqlx::FromRow, Debug)]
+//struct Content {
+//    id: i64,
+//    name: String,
+//}
+//
+//#[derive(sqlx::FromRow, Debug)]
+//struct BookContent {
+//    book_id: i64,
+//    content_id: i64,
+//}
 
 pub async fn import_books(src: &SqlitePool, dst: &SqlitePool) -> Result<(), RitmoErr> {
 
@@ -84,6 +84,6 @@ pub async fn import_books(src: &SqlitePool, dst: &SqlitePool) -> Result<(), Ritm
     tx.commit().await?;
 
     let duration = start.elapsed();
-    println!("sqlx import books: {:?}", duration);
+    dbg!(duration);
     Ok(())
 }

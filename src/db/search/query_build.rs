@@ -3,6 +3,7 @@ use crate::RitmoErr;
 use sqlx::query;
 use sqlx::SqlitePool;
 
+#[allow(dead_code)]
 #[derive(Default)]
 pub struct BookSearchCriteria {
     pub book_name: Option<String>,
@@ -35,6 +36,7 @@ pub struct BookSearchCriteria {
     pub language_role: Option<String>,
 }
 
+#[allow(dead_code)]
 pub async fn search_books(pool: &SqlitePool, criteria: &BookSearchCriteria) -> Result<Vec<i64>, RitmoErr> {
     let (query_str, params) = build_query(criteria);
     let mut query = query(&query_str);

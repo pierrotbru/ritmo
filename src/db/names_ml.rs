@@ -1,12 +1,11 @@
-use crate::db::enhanced_name_manager_2::NameVariantPattern;
-use crate::db::enhanced_name_manager_2::NameCluster;
-use crate::db::enhanced_name_manager_2::VariantPatternType;
+use serde::{Serialize, Deserialize};
+use crate::db::enhanced_name_manager_2::{NameVariantPattern, NameCluster, VariantPatternType};
 use crate::errors::RitmoErr;
 use strsim::{jaro_winkler, levenshtein};
 use std::collections::HashMap;
 use rphonetic::{DoubleMetaphone, Encoder};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MLNameLearner {
     pub learned_patterns: Vec<NameVariantPattern>,
     pub name_clusters: Vec<NameCluster>,
@@ -33,9 +32,6 @@ impl MLNameLearner {
         
         // Raggruppa per similarità fonetica
         for name in names {
-//            if let Some(phonetic) = encoder.encode(name).primary {
-//                phonetic_groups.entry(phonetic).or_default().push(name.clone());
-//            }
             phonetic_groups.entry(encoder.encode(name)).or_default().push(name.clone());
         }
         
@@ -236,7 +232,8 @@ impl MLNameLearner {
             (pattern.base_form == name2 && pattern.variant_form == name1)
         })
     }
-    
+
+#[allow(dead_code)]    
     /// Aggiunge una variante osservata per l'apprendimento incrementale
     pub fn add_observed_variant(&mut self, name1: &str, name2: &str, confidence: f64,) -> Result<(), RitmoErr> {
         if let Some(pattern) = self.analyze_name_pair(name1, name2) {

@@ -7,6 +7,7 @@ pub mod import_books;
 pub mod import_books_tags;
 pub mod import_contents_people;
 
+use crate::import_people_test;
 use crate::import::import_books::import_books;
 use crate::import::import_books_tags::import_books_tags;
 use crate::import::import_contents_people::import_contents_people;
@@ -24,6 +25,7 @@ pub async fn copy_data_from_calibre_db(
 ) -> Result<(), RitmoErr> {
 
     let _ = import_people(calibre_conn, my_conn).await?;
+    let _ = import_people_test(calibre_conn, my_conn).await?;
     let _ = import_tags(calibre_conn, my_conn).await?;
     let _ = import_publishers(calibre_conn, my_conn).await?;
     let _ = import_books(calibre_conn, my_conn).await?;

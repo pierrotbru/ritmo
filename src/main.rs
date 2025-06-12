@@ -3,14 +3,12 @@ use crate::db::books::*;
 use crate::db::contents::*;
 use crate::db::connection::create_pool;
 use crate::errors::RitmoErr;
-use crate::tools::names_check::{check_names, compare_single_name};
 use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use tokio;
 
 mod errors;
 mod db;
-mod tools;
 mod import;
 
 
@@ -233,17 +231,10 @@ async fn main() -> Result<(), RitmoErr> {
             import::copy_data_from_calibre_db(&source_pool, &destination_pool).await?;
         },
         Commands::List { path: _, id: _, .. } => {
-            // Implementation for listing books can be added here
         },
-        Commands::Names { path, .. } => {
-            let conn = create_pool(&path, false).await?;
-            let names = check_names(&conn, 0.96, 0.93).await?;
-            names.iter().for_each(|n| println!("{:?}", n));
+        Commands::Names {  .. } => {
         },
-        Commands::Check { path, name, .. } => {
-            let conn = create_pool(&path, false).await?;
-            let names = compare_single_name(&conn, name.clone(), 0.7, 0.7).await?;
-            names.iter().for_each(|n| println!("{:?}", n));
+        Commands::Check {   .. } => {
         },
         Commands::Search { path: _, .. } => {
         },
@@ -324,8 +315,10 @@ async fn main() -> Result<(), RitmoErr> {
 
             let _new_book_id = new_book.add_book(pool).await?;
         },
-        Commands::Test { source, destination } => {
-            let destination_pool = create_pool(&destination, false).await?;
+        Commands::Test { source, destination, .. } => {
+            dbg!(source);
+            dbg!(destination);
+            let destination_pool = create_pool(&destination, true).await?;
             let source_pool = create_pool(&source, false).await?;
             import_people_test(&source_pool, &destination_pool).await?;
         },

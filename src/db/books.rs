@@ -4,6 +4,7 @@ use crate::RitmoErr;
 use sqlx::SqlitePool;
 use crate::db::contents::*;
 
+#[allow(dead_code)]
 #[derive(Debug, Default)]
 pub struct Book {
     pub data: BookUserData,
@@ -30,6 +31,7 @@ pub struct BookUserData {
     pub contents: Vec<Content>
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Default)]
 pub struct BookDbData {
     pub id: i64,
@@ -49,6 +51,7 @@ pub struct BookDbData {
     pub pre_accepted: Option<i32>,
 }
 
+#[allow(dead_code)]
 #[derive(sqlx::FromRow)]
 struct IdResult {
     id: i32,
@@ -141,7 +144,7 @@ impl Book {
         .await
         .map_err(|e| RitmoErr::DatabaseInsertFailed(format!("Failed to insert content: {}", e)))?;
 
-        println!("result #{:?}", result);
+//        dbg!(&result);
 
         let new_book_id = result.last_insert_rowid();
         println!("book id #{:?}", new_book_id);
@@ -160,7 +163,7 @@ impl Book {
             .execute(&mut *tx)
             .await
             .map_err(|e| RitmoErr::DatabaseInsertFailed(format!("Failed to insert book tags: {}", e)))?;
-            println!("added tag #{:?}", tag_id);
+            dbg!(tag_id);
         }
 
         for (person_name, role_name) in &self.data.people {
@@ -192,7 +195,7 @@ impl Book {
             .await
             .map_err(|e| RitmoErr::DatabaseInsertFailed(format!("Failed to insert into books_people_roles: {}", e)))?;
 
-            println!("added people #{:?}", x);
+            dbg!(x);
         }
 
         tx.commit()
@@ -200,8 +203,8 @@ impl Book {
             .map_err(|e| RitmoErr::TransactionCommitFailed(e.to_string()))?;
 
         for cont in &mut self.data.contents {
-            println!("{:?}", cont);
-            println!("new_book_id :{:?}", new_book_id);            
+            dbg!(&cont);
+            dbg!(new_book_id);            
             cont.data.to_book = new_book_id;
             let _ = cont.add_content(pool.clone()).await?;
         }

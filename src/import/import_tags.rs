@@ -2,11 +2,11 @@ use crate::RitmoErr;
 use sqlx::{sqlite::SqlitePool, query, Row};
 use std::time::Instant;
 
-#[derive(sqlx::FromRow, Debug)]
-struct DestTag {
-    id: i64,
-    name: String,
-}
+//#[derive(sqlx::FromRow, Debug)]
+//struct DestTag {
+//    id: i64,
+//    name: String,
+//}
 
 pub async fn import_tags(src: &SqlitePool, dst: &SqlitePool) -> Result<(), RitmoErr> {
     let start = Instant::now();
@@ -31,6 +31,6 @@ pub async fn import_tags(src: &SqlitePool, dst: &SqlitePool) -> Result<(), Ritmo
     tx.commit().await.map_err(|e| RitmoErr::TransactionCommitFailed(e.to_string()))?;
 
     let duration = start.elapsed();
-    println!("sqlx import tags: {:?}", duration);
+    dbg!(duration);
     Ok(())
 }

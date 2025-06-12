@@ -2,11 +2,11 @@ use crate::RitmoErr;
 use sqlx::{sqlite::SqlitePool, query, Row};
 use std::time::Instant;
 
-#[derive(sqlx::FromRow, Debug)]
-struct BookTag {
-    book_id: i64,
-    tag_id: i64,
-}
+//#[derive(sqlx::FromRow, Debug)]
+//struct BookTag {
+//    book_id: i64,
+//    tag_id: i64,
+//}
 
 pub async fn import_books_tags(src: &SqlitePool, dst: &SqlitePool) -> Result<(), RitmoErr> {
     let start = Instant::now();
@@ -29,6 +29,6 @@ pub async fn import_books_tags(src: &SqlitePool, dst: &SqlitePool) -> Result<(),
     tx.commit().await?;
 
     let duration = start.elapsed();
-    println!("sqlx import books_tags: {:?}", duration);
+    dbg!(duration);
     Ok(())
 }
