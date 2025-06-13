@@ -9,6 +9,7 @@ use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use rphonetic::{DoubleMetaphone, Encoder};
 use crate::errors::RitmoErr;
+use std::time::Instant;
 
 #[derive(Debug)]
 pub enum NameManagerErrorInternal {
@@ -495,6 +496,12 @@ impl NameManager {
         }
     }
 
+    // Metodo per generare il prossimo ID UNICO disponibile
+    fn generate_next_id(&mut self) -> i64 {
+        let next_id = self.all_person_records.keys().max().copied().unwrap_or(0) + 1;
+        next_id
+    }
+
     fn create_person_record(&self, input: &str, id: i64) -> Result<PersonRecord, RitmoErr> {
         let parsed_name = self.parse_name(input)?;
         let normalized_key = self.normalize_parsed_name_for_matching(&parsed_name);
@@ -670,6 +677,7 @@ impl NameManager {
         }
         Ok(())
     }
+    
     async fn save_single_person_record_in_tx(
         &self,
         transaction: &mut Transaction<'_, Sqlite>, 
@@ -755,6 +763,82 @@ impl NameManager {
 
         Ok(())
     }
+
+
+    /// Processa una lista di nomi, applicando la logica di matching e aggiungendo i record
+    /// al NameManager e al database. Gli ID possono essere forniti (per importazioni)
+    /// o generati (per nuovi nomi). Include il training ML a punti fissi.
+    ///
+    /// Ritorna un vettore contenente gli IDs dei nomi che sono stati aggiunti come nuovi record.
+    pub async fn process_names( &mut self, dst: &SqlitePool, names_to_process: Vec<(Option<i64>, String)>) -> Result<Vec<i64>, RitmoErr> {
+        let mut new_person_records_to_add_buffer: Vec<PersonRecord> = Vec::new();
+        let mut added_ids_this_run: Vec<i64> = Vec::new();
+
+        const INTERVALS: [i32; 6] = [ 100, 200, 500, 1000, 2000, 5000];
+
+        let _total_names = names_to_process.len();
+        let start_time = Instant::now();
+
+        self.load_names_from_db(dst).await?;
+        if self.all_person_records.len() > 0 {
+            self.load_ml_data_from_db(dst).await?;
+        }
+
+        for (provided_id, name_input) in names_to_process {
+
+            let n = (self.all_person_records.len() + added_ids_this_run.len()) as i32;
+            let last = *INTERVALS.iter().max().unwrap();
+            if INTERVALS.contains(&n) || n > last && n % last == 0 {
+                self.train_ml_model()?;
+            }
+
+            let match_result = self.find_matches(&name_input);
+            let mut should_add_new = false;
+
+            // --- Logica di matching (uguale a prima) ---
+            match match_result {
+                MatchResult::ExactMatch(_) => { /* ... */ },
+                MatchResult::HighConfidenceMatch(matches) => {
+                    if matches[0].confidence >= 0.95 { /* ... */ } else { should_add_new = true; }
+                },
+                MatchResult::PossibleMatches(_) | MatchResult::NoMatch => {
+                    should_add_new = true;
+                },
+            }
+            // --- Fine logica di matching ---
+
+            if should_add_new {
+                let id_to_use = if let Some(id_from_input) = provided_id {
+                    id_from_input
+                } else {
+                    self.generate_next_id()
+                };
+                match self.create_person_record(&name_input, id_to_use) {
+                    Ok(new_record) => {
+                        let record_id = new_record.id;
+                        self.add_person_record(new_record.clone())?;
+                        new_person_records_to_add_buffer.push(new_record);
+                        added_ids_this_run.push(record_id);
+                    },
+                    Err(e) => {
+                        eprintln!("Errore nella creazione del record per '{}': {}", name_input, e);
+                    }
+                }
+            }
+        }
+
+        if !new_person_records_to_add_buffer.is_empty() {
+            self.save_person_records_to_db(dst, &new_person_records_to_add_buffer).await?;
+            new_person_records_to_add_buffer.clear();
+        }
+
+        self.train_ml_model()?;
+
+        let elapsed_time = start_time.elapsed();
+        dbg!(elapsed_time);
+        Ok(added_ids_this_run)
+    }
+
 
 #[allow(dead_code)]
     /// aggiunge al database i nomi contenuti nel vettore in ingresso, ed inoltre li aggiunge anche a self
@@ -861,10 +945,6 @@ impl NameManager {
         tx.commit().await
             .map_err(|e| RitmoErr::MLError(format!("Failed to commit ML data transaction: {}", e)))?;
         
-        println!("Dati ML salvati nel database: {} pattern, {} cluster, {} frequenze", 
-                 self.ml_learner.learned_patterns.len(),
-                 self.ml_learner.name_clusters.len(),
-                 self.ml_learner.pattern_frequency.len());
         Ok(())
     }
     
@@ -928,11 +1008,6 @@ impl NameManager {
             }
         }
         
-        println!("Dati ML caricati dal database: {} pattern, {} cluster, {} frequenze, {} varianti", 
-                 self.ml_learner.learned_patterns.len(),
-                 self.ml_learner.name_clusters.len(),
-                 self.ml_learner.pattern_frequency.len(),
-                 self.name_variants.len());
         Ok(())
     }
 }

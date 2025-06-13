@@ -1,5 +1,9 @@
+use sqlx::Row;
+use sqlx::SqlitePool;
+use crate::names::NameVariantPattern;
+use crate::names::NameCluster;
+use crate::names::VariantPatternType;
 use serde::{Serialize, Deserialize};
-use crate::db::enhanced_name_manager_2::{NameVariantPattern, NameCluster, VariantPatternType};
 use crate::errors::RitmoErr;
 use strsim::{jaro_winkler, levenshtein};
 use std::collections::HashMap;
@@ -252,5 +256,101 @@ impl MLNameLearner {
         }
         
         Ok(())
+    }
+
+        async fn save_data<T: serde::Serialize>(
+        tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+        data_type: &str,
+        data_value: &T,
+    ) -> Result<(), RitmoErr> {
+        let json_string = serde_json::to_string(data_value)?;
+        
+        sqlx::query("INSERT OR REPLACE INTO ml_name_data (id, data_type, data_json)
+                      VALUES ((SELECT id FROM ml_name_data WHERE data_type = ?), ?, ?)")
+            .bind(data_type)
+            .bind(data_type)
+            .bind(json_string)
+            .execute(&mut **tx)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn save_to_db(&self, pool: &SqlitePool) -> Result<(), RitmoErr> {
+        let mut tx = pool.begin().await?;
+
+        // Salvataggio dei campi di MLNameLearner
+        Self::save_data(&mut tx, "learned_patterns", &self.learned_patterns).await?;
+        Self::save_data(&mut tx, "name_clusters", &self.name_clusters).await?;
+        Self::save_data(&mut tx, "pattern_frequency", &self.pattern_frequency).await?;
+
+        // Salvataggio della configurazione ML (i due campi f64 e usize)
+        let config = serde_json::json!({
+            "minimum_confidence": self.minimum_confidence,
+            "minimum_frequency": self.minimum_frequency
+        });
+        Self::save_data(&mut tx, "ml_config", &config).await?;
+        
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    async fn load_data<T: for<'de> serde::Deserialize<'de>>(
+        pool: &SqlitePool,
+        data_type: &str,
+    ) -> Result<Option<T>, RitmoErr> {
+        let row = sqlx::query("SELECT data_json FROM ml_name_data WHERE data_type = ?")
+            .bind(data_type)
+            .fetch_optional(pool)
+            .await?;
+
+        match row {
+            Some(r) => {
+                // `try_get` è il modo sicuro per estrarre i dati dalla riga
+                let json_string: String = r.try_get("data_json")?;
+                let data: T = serde_json::from_str(&json_string)?;
+                Ok(Some(data))
+            }
+            None => Ok(None),
+        }
+    }
+
+    /// Carica un'istanza di MLNameLearner dal database.
+    pub async fn load_from_db(pool: &SqlitePool) -> Result<Self, RitmoErr> {
+        // Caricamento dei campi complessi serializzati come JSON
+        let learned_patterns = Self::load_data(pool, "learned_patterns")
+            .await?
+            .unwrap_or_else(Vec::new); // Se non trovati, inizia con un vettore vuoto
+
+        let name_clusters = Self::load_data(pool, "name_clusters")
+            .await?
+            .unwrap_or_else(Vec::new); // Se non trovati, inizia con un vettore vuoto
+
+        let pattern_frequency = Self::load_data(pool, "pattern_frequency")
+            .await?
+            .unwrap_or_else(HashMap::new); // Se non trovati, inizia con una HashMap vuota
+
+        // Caricamento e deserializzazione della configurazione
+        let config_json = Self::load_data::<serde_json::Value>(pool, "ml_config")
+            .await?
+            .unwrap_or_else(|| serde_json::json!({
+                "minimum_confidence": 0.0, // Valore di default se non trovato
+                "minimum_frequency": 0    // Valore di default se non trovato
+            }));
+
+        let minimum_confidence = config_json["minimum_confidence"].as_f64()
+            .unwrap_or(0.0); // Default se il campo non esiste o non è un f64
+        
+        let minimum_frequency = config_json["minimum_frequency"].as_u64()
+            .map(|u| u as usize) // Converte u64 in usize
+            .unwrap_or(0); // Default se il campo non esiste o non è un u64
+
+        Ok(MLNameLearner {
+            learned_patterns,
+            name_clusters,
+            pattern_frequency,
+            minimum_confidence,
+            minimum_frequency,
+        })
     }
 }

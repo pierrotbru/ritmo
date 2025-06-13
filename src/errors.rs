@@ -1,4 +1,3 @@
-
 //#![allow(unused)]
 //
 //use thiserror::Error;
@@ -142,28 +141,6 @@ use thiserror::Error;
 use sqlx::Error as SqlxError;
 
 #[derive(Error, Debug)]
-pub enum QueryBuilderError {
-    #[error("Query building error: {0}")]
-    InvalidParameter(&'static str),
-    #[error("Query synthax error: {0}")]
-    SyntaxError(String),
-    #[error("No column selection in query")]
-    NoSelectColumns,
-    #[error("Query generic error: {0}")]
-    GenericError(String),
-}
-
-#[derive(Error, Debug)]
-pub enum QueryError {
-    #[error("Query execution error: {0}")]
-    GenericQueryError(String),
-    #[error("Query building error: {0}")]
-    QueryBuilderError(#[from] QueryBuilderError),
-    #[error("Database error: {0}")]
-    DatabaseError(#[from] SqlxError),
-}
-
-#[derive(Error, Debug)]
 pub enum RitmoErr {
     #[error("Migration failed: {0}")]
     DatabaseMigrationFailed(String),
@@ -201,14 +178,14 @@ pub enum RitmoErr {
     DatabaseCreationFailed(String),
     #[error("Other error: {0}")]
     OtherError(String),
-    #[error("Query building error: {0}")]
-    QueryBuilderError(#[from] QueryBuilderError), 
+//    #[error("Query building error: {0}")]
+//    QueryBuilderError(#[from] QueryBuilderError), 
     #[error("Invalid table name: {0}")]
     InvalidTableName(String),
     #[error("Invalid column name: {0}")]
     InvalidColumnName(String),
-    #[error("Query execution error: {0}")]
-    QueryError(#[from] QueryError),
+//    #[error("Query execution error: {0}")]
+//    QueryError(#[from] QueryError),
     #[error("Record not found")]
     RecordNotFound,
     #[error("Search and add operation failed: {0}")]
@@ -226,9 +203,21 @@ pub enum RitmoErr {
 
 }
 
-impl From<SqlxError> for RitmoErr {
-    fn from(err: SqlxError) -> Self {
-        RitmoErr::UnknownError(err.to_string())
+// Implementazione per SqlxError
+impl From<sqlx::Error> for RitmoErr {
+    fn from(err: sqlx::Error) -> Self {
+        // Ora puoi mappare SqlxError a DatabaseError
+        RitmoErr::DatabaseError(format!("Database operation failed: {}", err))
+        // Volendo, potresti anche fare:
+        // RitmoErr::DatabaseError(err) // Se vuoi mantenere l'oggetto SqlxError
+        // In tal caso, la variante sarebbe DatabaseError(sqlx::Error)
     }
 }
 
+// Implementazione per serde_json::Error
+impl From<serde_json::Error> for RitmoErr {
+    fn from(err: serde_json::Error) -> Self {
+        RitmoErr::MLError(format!("Serialization/Deserialization error: {}", err))
+        // Oppure RitmoErr::UnknownError(...) o un nuovo RitmoErr::SerializationError(...)
+    }
+}
