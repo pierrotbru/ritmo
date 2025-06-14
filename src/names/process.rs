@@ -28,6 +28,9 @@ impl NameManager {
         // Questo è cruciale per find_matches e per mantenere il conteggio degli ID.
         self.load_names_from_db(pool).await?;
         println!("{} record esistenti caricati nel NameManager.", self.all_person_records.len());
+        if self.all_person_records.len() > 0 {
+            self.load_ml_from_db(pool).await?;
+        }
 
 
         for (provided_id, name_input) in names_to_process {

@@ -5,10 +5,9 @@ use crate::names::utils::NameUtils;
 use sqlx::{Row, Transaction, Sqlite, SqlitePool, query};
 use crate::errors::RitmoErr;
 use super::models::{PersonRecord, ParsedName};
-use super::manager::NameManager; // Per accedere a NameManager e ai suoi campi
- // Per caricare/salvare dati ML
-
-impl NameManager { // Implementa metodi su NameManager
+use super::manager::NameManager;
+ 
+impl NameManager {
     pub async fn load_ml_from_db(&mut self, pool: &SqlitePool) -> Result<(), RitmoErr> {
         self.ml_learner = MLNameLearner::load_from_db(pool).await?;
         self.name_utils = NameUtils::load_from_db(pool).await?;
@@ -74,14 +73,6 @@ impl NameManager { // Implementa metodi su NameManager
         Ok(())
     }
 
-//    pub async fn load_ml_data_from_db(pool: &SqlitePool) -> Result<(), RitmoErr> {
-//        MLNameLearner::load_from_db(pool).await
-//    }
-
-    pub async fn save_ml_data_to_db(&self, pool: &SqlitePool) -> Result<(), RitmoErr> {
-        self.ml_learner.save_to_db(pool).await
-    }
-
     async fn save_single_person_record_in_tx(
         &self,
         transaction: &mut Transaction<'_, Sqlite>,
@@ -121,10 +112,6 @@ impl NameManager { // Implementa metodi su NameManager
             return Err(RitmoErr::DatabaseTransactionError(format!("Nessuna riga modificata per ID {} durante il salvataggio del record.", record.id)));
         }
 
-        // Save aliases in a separate table if you have one, e.g., `person_aliases`
-        // For simplicity, this example does not include alias persistence.
-        // You would typically iterate over `record.aliases` and insert them here.
-
         Ok(())
     }
 
@@ -146,29 +133,29 @@ impl NameManager { // Implementa metodi su NameManager
             .map_err(|e| RitmoErr::DatabaseTransactionError(format!("Errore nel commettere la transazione: {}", e)))?;
 
         self.train_ml_model()?; // Esegue il training del modello ML.
-        self.save_ml_data_to_db(pool).await?;
+        self.save_ml_to_db(pool).await?;
 
         Ok(())
     }
-
-    /// Salva tutti i PersonRecord presenti nella HashMap `all_person_records` nel database, utilizzando una singola transazione.
-    pub async fn save_manager_person_records_to_db(
-        &self,
-        pool: &SqlitePool,
-    ) -> Result<(), RitmoErr> {
-        let mut transaction = pool.begin()
-            .await
-            .map_err(|e| RitmoErr::DatabaseTransactionError(format!("Errore nell'avviare la transazione: {}", e)))?;
-
-        for record in self.all_person_records.values() {
-            self.save_single_person_record_in_tx(&mut transaction, record).await?;
-        }
-        transaction.commit()
-            .await
-            .map_err(|e| RitmoErr::DatabaseTransactionError(format!("Errore nel commettere la transazione: {}", e)))?;
-
-        self.save_ml_data_to_db(pool).await?;
-
-        Ok(())
-    }
+//
+//    /// Salva tutti i PersonRecord presenti nella HashMap `all_person_records` nel database, utilizzando una singola transazione.
+//    pub async fn //save_manager_person_records_to_db(
+//        &self,
+//        pool: &SqlitePool,
+//    ) -> Result<(), RitmoErr> {
+//        let mut transaction = pool.begin()
+//            .await
+//            .map_err(|e| RitmoErr::DatabaseTransactionError(format!("Errore nell'avviare la transazione: {}", e)))?;
+//
+//        for record in self.all_person_records.values() {
+//            self.save_single_person_record_in_tx(&mut transaction, record).await?;
+//        }
+//        transaction.commit()
+//            .await
+//            .map_err(|e| RitmoErr::DatabaseTransactionError(format!("Errore nel commettere la transazione: {}", e)))?;
+//
+//        self.save_ml_to_db(pool).await?;
+//
+//        Ok(())
+//    }
 }
