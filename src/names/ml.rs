@@ -12,11 +12,8 @@ impl NameManager { // Implementa metodi su NameManager
             .map(|record| record.normalized_key.clone())
             .collect();
 
-        // Passa una referenza a NameUtils per la generazione delle chiavi fonetiche
-        self.ml_learner.create_name_clusters(&all_names, &self.name_utils.double_metaphone)?;
-
+        self.ml_learner.create_name_clusters(&all_names)?;
         self.ml_learner.identify_variant_patterns()?;
-
         self.apply_learned_variants()?;
 
         println!("Training completato. {} pattern appresi, {} cluster creati.",

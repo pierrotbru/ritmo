@@ -26,7 +26,7 @@ impl NameManager {
     pub async fn load_names_from_db(&mut self, pool: &SqlitePool) -> Result<(), RitmoErr> {
         let rows = sqlx::query(
             r#"
-            SELECT id, name, given_name, surname, middle_names, title, suffix, display_name, normalized_key, phonetic_key, confidence
+            SELECT id, name, given_name, surname, middle_names, title, suffix, display_name, normalized_key, confidence
             FROM people
             "#,
         )
@@ -47,7 +47,6 @@ impl NameManager {
             let suffix: Option<String> = row.try_get("suffix")?;
             let display_name: String = row.try_get("display_name")?;
             let normalized_key: String = row.try_get("normalized_key")?;
-            let phonetic_key: String = row.try_get("phonetic_key")?;
             let confidence: f64 = row.try_get("confidence")?;
             let aliases: Vec<String> = Vec::new(); // Aliases should probably be loaded from a separate table if persisted
             let parsed_name = ParsedName {
@@ -63,7 +62,6 @@ impl NameManager {
                 original_input,
                 parsed_name,
                 normalized_key,
-                phonetic_key,
                 confidence,
                 verified: true, // Assuming loaded from DB means verified
                 aliases,
@@ -87,9 +85,9 @@ impl NameManager {
             r#"
             INSERT OR REPLACE INTO people (
                 id, name, given_name, surname, middle_names, title, suffix,
-                display_name, normalized_key, phonetic_key, confidence, verified, created_at, updated_at, source
+                display_name, normalized_key, confidence, verified, created_at, updated_at, source
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%s', 'now'), strftime('%s', 'now'), ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%s', 'now'), strftime('%s', 'now'), ?)
             "#,
         )
         .bind(record.id)
@@ -101,7 +99,6 @@ impl NameManager {
         .bind(&record.parsed_name.suffix)
         .bind(&record.parsed_name.display_name)
         .bind(&record.normalized_key)
-        .bind(&record.phonetic_key)
         .bind(record.confidence)
         .bind(record.verified)
         .bind("biblioteca")

@@ -6,19 +6,16 @@ use std::collections::HashMap;
 use human_name::Name;
 use strsim::levenshtein;
 use unicode_normalization::UnicodeNormalization;
-use rphonetic::{DoubleMetaphone, Encoder};
 use crate::errors::RitmoErr;
 use super::models::{NameManagerErrorInternal, ParsedName}; // Importa i tipi dal modulo models
 
 pub struct NameUtils {
-    pub double_metaphone: DoubleMetaphone,
     pub name_variants: std::collections::HashMap<String, Vec<String>>, // Usato da are_known_variants
 }
 
 impl NameUtils {
-    pub fn new(double_metaphone: DoubleMetaphone, name_variants: std::collections::HashMap<String, Vec<String>>) -> Self {
+    pub fn new(name_variants: std::collections::HashMap<String, Vec<String>>) -> Self {
         NameUtils {
-            double_metaphone,
             name_variants,
         }
     }
@@ -65,11 +62,8 @@ impl NameUtils {
             .await?
             .unwrap_or_else(HashMap::new); // Se non trova, inizia con una HashMap vuota
 
-        let double_metaphone = Self::load_data(pool, "double_metaphone").await?;
-
         Ok(NameUtils {
             name_variants,
-            double_metaphone: double_metaphone.expect("REASON")
         })
     }
 
@@ -110,18 +104,6 @@ impl NameUtils {
             .collect::<String>();
 
         normalized.split_whitespace().collect::<Vec<&str>>().join(" ")
-    }
-
-    pub fn generate_phonetic_key(&self, text: &str) -> String {
-        let normalized = self.normalize_string(text);
-        let parts: Vec<&str> = normalized.split_whitespace().collect();
-        let mut phonetic_parts = Vec::new();
-
-        for part in parts {
-            phonetic_parts.push(self.double_metaphone.encode(part));
-        }
-
-        phonetic_parts.join(" ")
     }
 
     pub fn normalized_levenshtein_distance(&self, s1: &str, s2: &str) -> f64 {

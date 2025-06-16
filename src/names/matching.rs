@@ -13,15 +13,10 @@ impl super::manager::NameManager { // Implementa metodi su NameManager
 
         let parsed_input = parsed_input_res.unwrap();
         let normalized_input = self.name_utils.normalize_parsed_name_for_matching(&parsed_input);
-        let phonetic_input = self.name_utils.generate_phonetic_key(&normalized_input);
 
         let mut candidate_ids: HashSet<i64> = HashSet::new();
 
         if let Some(ids) = self.normalized_key_index.get(&normalized_input) {
-            candidate_ids.extend(ids);
-        }
-
-        if let Some(ids) = self.phonetic_key_index.get(&phonetic_input) {
             candidate_ids.extend(ids);
         }
 
@@ -92,21 +87,6 @@ impl super::manager::NameManager { // Implementa metodi su NameManager
                             similarity_score: 0.95,
                             match_type: MatchType::Alias,
                             confidence: 0.95 * person.confidence,
-                        });
-                    }
-                }
-
-                // Phonetic Similarity
-                if best_score < 1.0 {
-                    let phonetic_score = jaro_winkler(&phonetic_input, &person.phonetic_key);
-                    if phonetic_score >= 0.8 && phonetic_score > best_score * 0.9 {
-                        best_score = phonetic_score * 0.9;
-                        best_match = Some(NameMatch {
-                            person_id: person.id,
-                            matched_name: person.parsed_name.display_name.clone(),
-                            similarity_score: phonetic_score,
-                            match_type: MatchType::PhoneticSimilar,
-                            confidence: phonetic_score * person.confidence * 0.85,
                         });
                     }
                 }

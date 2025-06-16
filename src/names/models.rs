@@ -31,7 +31,6 @@ pub struct PersonRecord {
     pub original_input: String,
     pub parsed_name: ParsedName,
     pub normalized_key: String,
-    pub phonetic_key: String, 
     pub confidence: f64,
     pub verified: bool,
     pub aliases: Vec<String>,
@@ -69,11 +68,8 @@ pub struct NameMatch {
 pub enum MatchType {
     Exact,
     NameOrder,
-//    Phonetic,
-//    Abbreviated,
     Typo,
     Alias,
-    PhoneticSimilar,
     TypoMinor,
     TypoMajor,
     Learned,
@@ -86,7 +82,6 @@ pub struct NameVariantPattern {
     pub pattern_type: VariantPatternType,
     pub confidence: f64,
     pub frequency: usize,
-    pub phonetic_similarity: f64,
     pub edit_distance: usize,
 }
 
@@ -94,10 +89,11 @@ pub struct NameVariantPattern {
 pub enum VariantPatternType {
     Suffix,        
     Prefix,        
-    Phonetic,      
     Transliteration, 
     Abbreviation,  
     Compound,      
+    Typo,
+    Other
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -105,6 +101,5 @@ pub struct NameCluster {
     pub cluster_id: usize,
     pub members: Vec<String>,
     pub centroid: String,
-    pub phonetic_signature: String,
     pub confidence: f64,
 }

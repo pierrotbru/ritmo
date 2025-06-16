@@ -19,7 +19,6 @@ log = "0.4.25"
 human_name = "2.0.4"
 fuzzy-matcher = "0.3.7"
 rand = "0.9.1"
-rphonetic = "3.0.3"
 serde_json = "1.0.140"
 
 [features]
