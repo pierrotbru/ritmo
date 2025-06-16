@@ -134,6 +134,15 @@ impl NameUtils {
     }
 
     pub fn parse_name(&self, input: &str) -> Result<ParsedName, RitmoErr> {
+
+        if input.split(|c: char| c.is_whitespace() || c == '.')
+       .filter(|s|!s.is_empty())
+       .count() == 1 {
+            let mut parsed_name = ParsedName::default();
+            parsed_name.given_name = input.trim().to_string();
+            parsed_name.display_name = input.trim().to_string();
+            return Ok(parsed_name);
+        }
         let parsed: Name = Name::parse(input)
             .ok_or_else(|| NameManagerErrorInternal::NameParsingError(format!("Impossibile parsificare il nome: '{}'", input)))?;
 
