@@ -1,198 +1,107 @@
-// src/name_matching/manager.rs
-
+use crate::ml::entity_learner::{MLEntityLearner, VariantPatternType};
+use crate::ml::entity_persistence::{save_ml_to_db, load_ml_from_db, save_scalar_to_db, load_scalar_from_db};
+use crate::names::models::PersonRecord;
+use crate::names::utils::NameUtils;
 use sqlx::SqlitePool;
-use crate::names::names_feedback::save_feedback;
-use crate::names::names_feedback::FeedbackType;
-use crate::names::names_ml::MLNameLearner;
 use std::collections::{HashMap, HashSet};
-use fuzzy_matcher::skim::SkimMatcherV2;
-use crate::errors::RitmoErr;
-use super::models::PersonRecord;
-use super::utils::NameUtils; // Importa le utilità
+use crate::RitmoErr;
 
-#[allow(dead_code)]
+const TRAINING_THRESHOLDS: &[usize] = &[100, 200, 500, 1000, 2000, 5000];
+const TRAINING_REPEAT: usize = 5000;
+
 pub struct NameManager {
-    pub fuzzy_matcher: SkimMatcherV2,
-    pub name_utils: NameUtils, // Incapsuliamo qui le utilità
-    pub common_abbreviations: HashMap<String, Vec<String>>,
-    pub similarity_threshold: f64,
-    pub typo_threshold: f64,
+    pub name_utils: NameUtils,
     pub all_person_records: HashMap<i64, PersonRecord>,
     pub normalized_key_index: HashMap<String, HashSet<i64>>,
-    pub name_variants_internal: HashMap<String, Vec<String>>, // Spostato qui per NameUtils
-    pub ml_learner: MLNameLearner,
+    pub ml_learner: MLEntityLearner,
+    last_trained_count: usize,
 }
 
 impl NameManager {
     pub fn new() -> Self {
-        let common_abbreviations = HashMap::new();
-        let name_variants_internal = HashMap::new();
-        let name_utils = NameUtils::new(name_variants_internal.clone());
-
+        let name_utils = NameUtils::new(HashMap::new());
         Self {
-            fuzzy_matcher: SkimMatcherV2::default(),
             name_utils,
-            common_abbreviations,
-            similarity_threshold: 0.75,
-            typo_threshold: 0.85,
             all_person_records: HashMap::new(),
             normalized_key_index: HashMap::new(),
-            name_variants_internal,
-            ml_learner: MLNameLearner::new(),
+            ml_learner: MLEntityLearner::new(),
+            last_trained_count: 0,
         }
     }
 
-    #[allow(dead_code)]
-    pub fn get_person_name_by_id(&self, id: i64) -> Option<String> {
-        self.all_person_records
-            .get(&id)
-            .map(|record| record.original_input.clone())
-    }
-
-    #[allow(dead_code)]
-    pub fn merge_person_records(&mut self, keeper_id: i64, duplicate_id: i64) -> Result<(), RitmoErr> {
-        if keeper_id == duplicate_id {
-            return Err(RitmoErr::MergeError("Impossibile unire un record con se stesso.".to_string()));
-        }
-
-        let duplicate_record = self.all_person_records.remove(&duplicate_id)
-            .ok_or_else(|| RitmoErr::MergeError(format!("Record duplicato con ID {} non trovato.", duplicate_id)))?;
-
-        let keeper_record = self.all_person_records.get_mut(&keeper_id)
-            .ok_or_else(|| RitmoErr::MergeError(format!("Record principale con ID {} non trovato.", keeper_id)))?;
-
-        // Logic for merging aliases (already good)
-        if !keeper_record.aliases.contains(&duplicate_record.original_input) &&
-           keeper_record.original_input != duplicate_record.original_input {
-            keeper_record.aliases.push(duplicate_record.original_input.clone());
-        }
-
-        for alias in duplicate_record.aliases {
-            if !keeper_record.aliases.contains(&alias) &&
-               keeper_record.original_input != alias {
-                keeper_record.aliases.push(alias);
-            }
-        }
-
-        // Update indices for the merged record
-        let duplicate_normalized_key = duplicate_record.normalized_key.clone();
-        if let Some(ids) = self.normalized_key_index.get_mut(&duplicate_normalized_key) {
-            ids.remove(&duplicate_id);
-            ids.insert(keeper_id);
-            if ids.is_empty() {
-                self.normalized_key_index.remove(&duplicate_normalized_key);
-            }
-        }
-
-        Ok(())
-    }
-
-    // Metodo per aggiungere un alias a un record esistente
-    pub fn add_alias_to_person_record(&mut self, person_id: i64, alias_name: String) -> Result<(), RitmoErr> {
-        if let Some(record) = self.all_person_records.get_mut(&person_id) {
-            if !record.aliases.contains(&alias_name) && record.original_input != alias_name {
-                 record.aliases.push(alias_name.clone()); // Aggiungi l'alias alla lista del record
-                 // Aggiorna gli indici per l'alias appena aggiunto
-                 let normalized_alias = self.name_utils.normalize_string(&alias_name);
-
-                 self.normalized_key_index.entry(normalized_alias)
-                     .or_default()
-                     .insert(person_id);
-
-            }
-            Ok(())
-        } else {
-            Err(RitmoErr::DatabaseQueryFailed(format!("PersonRecord con ID {} non trovato per aggiungere alias.", person_id)))
-        }
-    }
-
-
-    #[allow(dead_code)]
-    pub fn add_new_record(&mut self, current_id: i64, name_input: &str) -> Result<(), RitmoErr> {
-        match self.create_person_record(name_input, current_id) {
-            Ok(new_record) => {
-                self.add_person_record(new_record)?;
-            },
-            Err(e) => {
-                eprintln!("Errore nella creazione del record per '{}': {}", name_input, e);
-            }
-        }
-        Ok(())
-    }
-
-    pub fn add_person_record(&mut self, record: PersonRecord) -> Result<(), RitmoErr> {
-        let id = record.id;
-        let normalized_key = record.normalized_key.clone();
-
-        self.all_person_records.insert(id, record.clone());
-
-        self.normalized_key_index.entry(normalized_key)
-            .or_default()
-            .insert(id);
-
-        for alias in &record.aliases {
-            let normalized_alias = self.name_utils.normalize_string(alias);
-            self.normalized_key_index.entry(normalized_alias)
-                .or_default()
-                .insert(id);
-        }
-        Ok(())
-    }
-
-    // Metodo per generare il prossimo ID UNICO disponibile
-    pub fn generate_next_id(&mut self) -> i64 {
-        let next_id = self.all_person_records.keys().max().copied().unwrap_or(0) + 1;
-        next_id
-    }
-
-    pub fn create_person_record(&self, input: &str, id: i64) -> Result<PersonRecord, RitmoErr> {
-        let parsed_name = self.name_utils.parse_name(input)?;
-        let normalized_key = self.name_utils.normalize_parsed_name_for_matching(&parsed_name);
-
-        Ok(PersonRecord {
+    pub fn add_new_record(&mut self, id: i64, name: &str) -> Result<(), RitmoErr> {
+        // Esempio minimale di aggiunta record
+        let parsed = self.name_utils.parse_name(name)?;
+        let normalized_key = self.name_utils.normalize_parsed_name_for_matching(&parsed);
+        let record = PersonRecord {
             id,
-            original_input: input.to_string(),
-            parsed_name,
-            normalized_key,
-            confidence: 1.0,
-            verified: false,
+            original_input: name.to_string(),
+            normalized_key: normalized_key.clone(),
             aliases: Vec::new(),
-        })
-    }
-
-    pub fn create_person_record_with_id(&mut self, name_input: &str, id: Option<i64>) -> Result<PersonRecord, RitmoErr> {
-        let record_id = if let Some(existing_id) = id {
-            existing_id
-        } else {
-            self.generate_next_id()
+            ..Default::default()
         };
-        self.create_person_record(name_input, record_id)
-    }
+        self.normalized_key_index
+            .entry(normalized_key)
+            .or_insert_with(HashSet::new)
+            .insert(id);
+        self.all_person_records.insert(id, record);
 
-    pub fn add_internal_name_variant(&mut self, base_name: &str, variant: &str) {
-        let base_normalized = self.name_utils.normalize_string(base_name);
-        let variant_normalized = self.name_utils.normalize_string(variant);
-
-        self.name_variants_internal
-            .entry(base_normalized.clone())
-            .or_default()
-            .push(variant_normalized.clone());
-
-        self.name_variants_internal
-            .entry(variant_normalized)
-            .or_default()
-            .push(base_normalized);
-    }
-
-    pub async fn register_false_positive(&mut self, pool: &SqlitePool, name1: &str, name2: &str) -> Result<(), RitmoErr> {
-        save_feedback(pool, FeedbackType::FalsePositive, name1, name2).await?;
-        self.ml_learner.apply_false_positive(name1, name2);
+        let current_count = self.all_person_records.len();
+        if Self::should_train_ml(current_count, self.last_trained_count) {
+            self.train_ml_model()?;
+            self.last_trained_count = current_count;
+        }
         Ok(())
     }
 
-    pub async fn register_false_negative(&mut self, pool: &SqlitePool, name1: &str, name2: &str) -> Result<(), RitmoErr> {
-        save_feedback(pool, FeedbackType::FalseNegative, name1, name2).await?;
-        self.ml_learner.apply_false_negative(name1, name2);
+    fn should_train_ml(current_count: usize, last_trained_count: usize) -> bool {
+        for &threshold in TRAINING_THRESHOLDS {
+            if last_trained_count < threshold && current_count >= threshold {
+                return true;
+            }
+        }
+        if current_count >= TRAINING_REPEAT
+            && (current_count / TRAINING_REPEAT) > (last_trained_count / TRAINING_REPEAT)
+        {
+            return true;
+        }
+        false
+    }
+
+    pub fn train_ml_model(&mut self) -> Result<(), RitmoErr> {
+        let all_names: Vec<String> = self.all_person_records.values()
+            .map(|r| r.normalized_key.clone())
+            .collect();
+        self.ml_learner.create_clusters(&all_names);
+        self.ml_learner.identify_variant_patterns(
+            &Self::classify_name_pattern,
+            &Self::calc_pattern_confidence,
+        );
+        Ok(())
+    }
+
+    fn classify_name_pattern(a: &str, b: &str, edit_dist: usize) -> VariantPatternType {
+        VariantPatternType::Typo // Semplificato, sostituisci con la logica completa
+    }
+
+    fn calc_pattern_confidence(_a: &str, _b: &str, _pattern_type: &VariantPatternType, sim: f64) -> f64 {
+        sim
+    }
+
+    pub async fn save_ml_to_db(&self, pool: &SqlitePool) -> Result<(), RitmoErr> {
+        let mut tx = pool.begin().await?;
+        save_ml_to_db(&mut tx, &self.ml_learner, "person").await?;
+        save_scalar_to_db(&mut tx, "person_last_trained_count", &self.last_trained_count).await?;
+        self.name_utils.save_to_db(pool).await?;
+        tx.commit().await?;
+        Ok(())
+    }
+
+    pub async fn load_ml_from_db(&mut self, pool: &SqlitePool) -> Result<(), RitmoErr> {
+        self.ml_learner = load_ml_from_db(pool, "person").await?;
+        self.last_trained_count = load_scalar_from_db(pool, "person_last_trained_count")
+            .await?.unwrap_or(0);
+        self.name_utils = NameUtils::load_from_db(pool).await?;
         Ok(())
     }
 }
