@@ -1,4 +1,3 @@
-use crate::import::import_people::import_people;
 use crate::db::books::*;
 use crate::db::contents::*;
 use crate::db::connection::create_pool;
@@ -321,7 +320,6 @@ async fn main() -> Result<(), RitmoErr> {
             dbg!(destination);
             let destination_pool = create_pool(&destination, true).await?;
             let source_pool = create_pool(&source, false).await?;
-            import_people(&source_pool, &destination_pool).await?;
         },
 
     }

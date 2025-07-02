@@ -3,25 +3,6 @@ use sqlx::{sqlite::SqlitePool, query, Row};
 use crate::RitmoErr;
 use std::time::Instant;
 
-//#[derive(sqlx::FromRow, Debug)]
-//struct Book {
-//    id: i64,
-//    name: String,
-//    series_id: Option<i64>,
-//}
-//
-//#[derive(sqlx::FromRow, Debug)]
-//struct Content {
-//    id: i64,
-//    name: String,
-//}
-//
-//#[derive(sqlx::FromRow, Debug)]
-//struct BookContent {
-//    book_id: i64,
-//    content_id: i64,
-//}
-
 pub async fn import_books(src: &SqlitePool, dst: &SqlitePool) -> Result<(), RitmoErr> {
 
     let mut tx = dst.begin().await?;
@@ -69,17 +50,8 @@ pub async fn import_books(src: &SqlitePool, dst: &SqlitePool) -> Result<(), Ritm
             .await
             .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
 
-        query!("INSERT INTO contents (id, name) VALUES (?, ?)", id, name)
-            .execute(&mut *tx)
-            .await
-            .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
-
         let _ = add_languages(&mut tx, result.unwrap(), id).await;
 
-        query!("INSERT INTO books_contents (book_id, content_id) VALUES (?, ?)", id, id)
-            .execute(&mut *tx)
-            .await
-            .map_err(|e| RitmoErr::DatabaseInsertFailed(e.to_string()))?;
     }
     tx.commit().await?;
 

@@ -2,7 +2,7 @@ DROP INDEX IF EXISTS idx_people_phonetic_key;
 DROP INDEX IF EXISTS idx_phonetic_codes_code;
 DROP INDEX IF EXISTS idx_phonetic_codes_person;
 DROP INDEX IF EXISTS idx_phonetic_codes_type;
-ALTER TABLE people RENAME TO people_old;
+DROP TABLE IF EXISTS people;
 CREATE TABLE people (
     id             INTEGER NOT NULL
                            PRIMARY KEY AUTOINCREMENT
@@ -23,7 +23,5 @@ CREATE TABLE people (
     source         TEXT    DEFAULT 'biblioteca',
     verified       INTEGER
 );
-DROP TABLE people_old;
-
 DROP TABLE IF EXISTS people_backup;
 DROP TABLE IF EXISTS people_phonetic_codes;
