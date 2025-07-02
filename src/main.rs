@@ -10,7 +10,7 @@ mod errors;
 mod db;
 mod import;
 mod names;
-
+mod publishers;
 
 
 /// Gestore database per libreria digitale
