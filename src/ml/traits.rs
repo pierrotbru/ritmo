@@ -8,3 +8,9 @@ pub trait MLProcessable {
     /// Aggiorna le varianti (ad es. dopo clustering ML)
     fn set_variants(&mut self, variants: Vec<String>);
 }
+
+pub trait MLEntity {
+    fn id(&self) -> i64;
+    fn key(&self) -> &str;
+    fn normalized_key(&self) -> String;
+}
