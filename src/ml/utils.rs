@@ -1,7 +1,18 @@
 use crate::errors::RitmoErr;
 use human_name::Name;
+use serde::{Deserialize, Serialize};
 use strsim::levenshtein;
 use unicode_normalization::UnicodeNormalization;
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ParsedName {
+    pub given_name: String,
+    pub surname: String,
+    pub middle_names: Vec<String>,
+    pub title: Option<String>,
+    pub suffix: Option<String>,
+    pub display_name: String,
+}
 
 pub struct MLStringUtils {
     pub name_variants: std::collections::HashMap<String, Vec<String>>,
@@ -69,5 +80,50 @@ impl MLStringUtils {
 
         false
     }
-    // ... altri metodi generici
+
+    /// Parsing avanzato di un nome, compatibile con la logica precedente
+    pub fn parse_name(input: &str) -> ParsedName {
+        // Caso nome singolo (es: "Mozart")
+        if input
+            .split(|c: char| c.is_whitespace() || c == '.')
+            .filter(|s| !s.is_empty())
+            .count()
+            == 1
+        {
+            return ParsedName {
+                given_name: input.trim().to_string(),
+                display_name: input.trim().to_string(),
+                ..Default::default()
+            };
+        }
+
+        // Usa la crate human-name per parsing avanzato
+        let parsed = Name::parse(input);
+
+        // Se il parsing fallisce, fallback a tutto input come display_name
+        if let Some(p) = parsed {
+            let given_name = p.given_name().unwrap_or("").to_string();
+            let surname = p.surname().to_string();
+            let middle_names: Vec<String> = p
+                .middle_names()
+                .map(|names| names.iter().map(|s| s.to_string()).collect())
+                .unwrap_or_default();
+            let title = p.honorific_prefix().map(|s| s.to_string());
+            let suffix = p.generational_suffix().map(|s| s.to_string());
+            let display_name = p.display_first_last();
+            ParsedName {
+                given_name,
+                surname,
+                middle_names,
+                title,
+                suffix,
+                display_name: display_name.to_string(),
+            }
+        } else {
+            ParsedName {
+                display_name: input.to_string(),
+                ..Default::default()
+            }
+        }
+    }
 }
