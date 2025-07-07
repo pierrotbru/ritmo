@@ -1,5 +1,6 @@
+use crate::ml::feedback::Feedback;
 use crate::ml::traits::MLProcessable;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 /// Raggruppa entità per chiave canonica e aggiorna le varianti di ciascun gruppo.
 /// (Esempio: deduplica nomi, editori, tag, ecc. usando la stessa logica)
