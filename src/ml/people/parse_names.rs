@@ -1,11 +1,10 @@
 use crate::ml::utils::MLStringUtils;
 use crate::RitmoErr;
 use human_name::Name;
-use serde::Serialize;
 use serde::Deserialize;
+use serde::Serialize;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[derive(PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 pub struct ParsedName {
     pub given_name: String,
     pub surname: String,
@@ -18,9 +17,12 @@ pub struct ParsedName {
 impl ParsedName {
     pub fn from_string(input: &str) -> Result<Self, RitmoErr> {
         // Gestione caso singola parola
-        if input.split(|c: char| c.is_whitespace() || c == '.')
-           .filter(|s| !s.is_empty())
-           .count() == 1 {
+        if input
+            .split(|c: char| c.is_whitespace() || c == '.')
+            .filter(|s| !s.is_empty())
+            .count()
+            == 1
+        {
             return Ok(ParsedName {
                 given_name: input.trim().to_string(),
                 display_name: input.trim().to_string(),
@@ -32,7 +34,8 @@ impl ParsedName {
         if let Some(parsed) = pparsed {
             let given_name = parsed.given_name().unwrap_or("").to_string();
             let surname = parsed.surname().to_string();
-            let middle_names: Vec<String> = parsed.middle_names()
+            let middle_names: Vec<String> = parsed
+                .middle_names()
                 .map(|names| names.iter().map(|s| s.to_string()).collect())
                 .unwrap_or_default();
             let title = parsed.honorific_prefix().map(|s| s.to_string());
@@ -47,8 +50,7 @@ impl ParsedName {
                 suffix,
                 display_name: display_name.to_string(),
             })
-        }
-        else {
+        } else {
             Ok(ParsedName {
                 display_name: input.to_string(),
                 ..Default::default()
@@ -58,21 +60,21 @@ impl ParsedName {
 
     pub fn to_normalized_key(&self, normalizer: &MLStringUtils) -> String {
         let mut full_name_parts = Vec::new();
-        
+
         if !self.given_name.is_empty() {
             full_name_parts.push(self.given_name.as_str());
         }
-        
+
         for middle_name in &self.middle_names {
             if !middle_name.is_empty() {
                 full_name_parts.push(middle_name.as_str());
             }
         }
-        
+
         if !self.surname.is_empty() {
             full_name_parts.push(self.surname.as_str());
         }
-        
+
         let combined_name = full_name_parts.join(" ");
         normalizer.normalize_string(&combined_name)
     }

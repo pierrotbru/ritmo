@@ -2,6 +2,7 @@ use crate::db::books::*;
 use crate::db::connection::create_pool;
 use crate::db::contents::*;
 use crate::errors::RitmoErr;
+use crate::new_name_example::example_usage;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 use tokio;
@@ -11,8 +12,9 @@ mod errors;
 mod import;
 //mod names;
 //mod publishers;
-mod ml;
 mod example;
+mod ml;
+mod new_name_example;
 
 /// Gestore database per libreria digitale
 ///
@@ -206,8 +208,7 @@ enum Commands {
     Dummy {
         #[arg(short, long, default_value = "../db001")]
         path: PathBuf,
-
-    }
+    },
 }
 
 #[tokio::main]
@@ -231,7 +232,8 @@ async fn main() -> Result<(), RitmoErr> {
         Commands::Names { .. } => {}
         Commands::Check { .. } => {}
         Commands::Dummy { path, .. } => {
-            let _pool = create_pool(&path, false).await?;
+            let pool = create_pool(&path, false).await?;
+            let _ = example_usage(&pool).await?;
         }
         Commands::Search { path: _, .. } => {}
         Commands::ContentAdd { path, .. } => {
