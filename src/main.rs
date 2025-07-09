@@ -12,6 +12,7 @@ mod import;
 //mod names;
 //mod publishers;
 mod ml;
+mod example;
 
 /// Gestore database per libreria digitale
 ///
@@ -202,6 +203,11 @@ enum Commands {
         #[arg(long)]
         interactive: bool,
     },
+    Dummy {
+        #[arg(short, long, default_value = "../db001")]
+        path: PathBuf,
+
+    }
 }
 
 #[tokio::main]
@@ -224,6 +230,9 @@ async fn main() -> Result<(), RitmoErr> {
         Commands::List { path: _, id: _, .. } => {}
         Commands::Names { .. } => {}
         Commands::Check { .. } => {}
+        Commands::Dummy { path, .. } => {
+            let _pool = create_pool(&path, false).await?;
+        }
         Commands::Search { path: _, .. } => {}
         Commands::ContentAdd { path, .. } => {
             let pool = create_pool(&path, false).await?;

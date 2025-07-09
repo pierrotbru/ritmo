@@ -1,6 +1,7 @@
+use crate::ml::traits::MLProcessable;
 use serde::{Deserialize, Serialize};
 
-use crate::people::record::MLEntity;
+//use crate::people::record::MLEntity;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct TagRecord {
@@ -25,14 +26,21 @@ impl TagRecord {
     }
 }
 
-impl MLEntity for TagRecord {
+// Implementazione del trait MLProcessable per TagRecord
+impl MLProcessable for TagRecord {
     fn id(&self) -> i64 {
         self.id
     }
-    fn key(&self) -> &str {
-        &self.label
-    }
-    fn normalized_key(&self) -> String {
+
+    fn canonical_key(&self) -> String {
         self.normalized_label.clone()
+    }
+
+    fn variants(&self) -> Vec<String> {
+        vec![self.label.clone()]
+    }
+
+    fn set_variants(&mut self, variants: Vec<String>) {
+        println!("Aggiornando varianti per tag {}: {:?}", self.label, variants);
     }
 }

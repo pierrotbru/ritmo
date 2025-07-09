@@ -5,3 +5,5 @@ pub mod feedback;
 pub mod generic;
 pub mod traits;
 pub mod utils;
+pub mod tags;
+pub mod people;

@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use crate::people::record::MLEntity;
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct PublisherRecord {
     pub id: i64,
@@ -22,17 +20,5 @@ impl PublisherRecord {
 
     pub fn normalize(name: &str) -> String {
         name.to_lowercase().replace(|c: char| !c.is_alphanumeric(), "")
-    }
-}
-
-impl MLEntity for PublisherRecord {
-    fn id(&self) -> i64 {
-        self.id
-    }
-    fn key(&self) -> &str {
-        &self.name
-    }
-    fn normalized_key(&self) -> String {
-        self.normalized_name.clone()
     }
 }

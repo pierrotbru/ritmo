@@ -1,18 +1,7 @@
-use crate::errors::RitmoErr;
+use crate::ml::people::parse_names::ParsedName;
 use human_name::Name;
-use serde::{Deserialize, Serialize};
 use strsim::levenshtein;
 use unicode_normalization::UnicodeNormalization;
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct ParsedName {
-    pub given_name: String,
-    pub surname: String,
-    pub middle_names: Vec<String>,
-    pub title: Option<String>,
-    pub suffix: Option<String>,
-    pub display_name: String,
-}
 
 pub struct MLStringUtils {
     pub name_variants: std::collections::HashMap<String, Vec<String>>,

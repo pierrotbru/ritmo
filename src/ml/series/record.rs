@@ -25,14 +25,14 @@ impl SeriesRecord {
     }
 }
 
-impl MLEntity for SeriesRecord {
-    fn id(&self) -> i64 {
-        self.id
-    }
-    fn key(&self) -> &str {
-        &self.title
-    }
-    fn normalized_key(&self) -> String {
-        self.normalized_title.clone()
-    }
-}
+//impl MLEntity for SeriesRecord {
+//    fn id(&self) -> i64 {
+//        self.id
+//    }
+//    fn key(&self) -> &str {
+//        &self.title
+//    }
+//    fn normalized_key(&self) -> String {
+//        self.normalized_title.clone()
+//    }
+//}

@@ -47,7 +47,7 @@ where
         let mut variants = records[i].variants();
         for j in (i + 1)..records.len() {
             if !merged_indices[j]
-                && is_similar(records[i].canonical_key(), records[j].canonical_key())
+                && is_similar(&records[i].canonical_key().as_str(), &records[j].canonical_key().as_str())
             {
                 variants.extend(records[j].variants());
                 merged_indices[j] = true;
@@ -116,7 +116,7 @@ where
     let mut result = Vec::new();
     for i in 0..records.len() {
         for j in (i + 1)..records.len() {
-            let score = similarity(records[i].canonical_key(), records[j].canonical_key());
+            let score = similarity(records[i].canonical_key().as_str(), records[j].canonical_key().as_str());
             if score >= threshold {
                 result.push((i, j, score));
             }
